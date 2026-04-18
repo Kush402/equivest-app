@@ -65,6 +65,25 @@ const activity = [
   { type: 'purchase',     label: 'Purchased 24 tokens — Highland Tower',     amount: '-$1,200', date: 'Nov 1'  },
 ];
 
+const hotSheets = [
+  { label: 'New Listings',        count: '27,309 Listings', updates: '4,677 Updates' },
+  { label: 'Price Reduced',       count: '43,952 Listings', updates: '2,766 Updates' },
+  { label: 'Upcoming Open House', count: '7,437 Listings',  updates: '1,981 Updates' },
+  { label: 'High Yield (7%+)',    count: '6,332 Listings',  updates: '1,690 Updates' },
+  { label: 'Newly Tokenized',     count: '3,527 Listings',  updates: '918 Updates'   },
+  { label: 'Back on Market',      count: '0 Listing',       updates: ''              },
+];
+
+const announcements = [
+  { title: 'Q2 Distribution Scheduled',   body: 'Rental income payouts post May 15. Review your breakdown.' },
+  { title: 'New Property Live',           body: 'Marina View Lofts (San Diego) is now open for investment.' },
+];
+
+const newUpdates = [
+  { title: 'Equivest Real Estate Service', tag: 'Sponsored',
+    body: '🏡 NEW LISTING — NOW AVAILABLE! Be the first to invest in 1133 W 9th St, Cleveland, OH.' },
+];
+
 const totalInvested = holdings.reduce((a, h) => a + h.invested, 0);
 const totalValue    = holdings.reduce((a, h) => a + h.currentValue, 0);
 const totalEarned   = holdings.reduce((a, h) => a + h.totalEarned, 0);
@@ -78,11 +97,52 @@ const ALLOCATION_SLICES = [
   { name: 'Centrepoint',     value: 20, amount: holdings[2].currentValue, color: 'oklch(0.65 0.2 45)'   },
 ];
 
-// Withdraw mock flow states
 type WithdrawStep = 'idle' | 'selecting' | 'confirm' | 'done';
 
+/* Lofty-style empty state illustration (re-used across cards) */
+function EmptyIllustration({ label = 'Nothing on your to-do list yet — Enjoy your day!' }: { label?: string }) {
+  return (
+    <div className="py-6 flex flex-col items-center justify-center">
+      <svg width="120" height="90" viewBox="0 0 200 150" fill="none" className="opacity-80">
+        <ellipse cx="100" cy="130" rx="70" ry="6" fill="#EEF2F6" />
+        <path d="M40 45 Q55 30 75 40 Q90 25 110 35 Q130 30 145 45 Z" fill="#F1F4F8" />
+        <rect x="70" y="70" width="50" height="50" fill="#E8ECF2" />
+        <path d="M70 70 L95 55 L120 70 Z" fill="#D9DEE8" />
+        <rect x="85" y="90" width="12" height="20" fill="#FFFFFF" />
+        <circle cx="60" cy="95" r="10" fill="#D9DEE8" />
+        <path d="M55 95 L60 90 L65 95 L65 105 L55 105 Z" fill="#C8CFDB" />
+      </svg>
+      <p className="text-[11px] text-gray-400 mt-1 text-center max-w-[220px]">{label}</p>
+    </div>
+  );
+}
+
+/* Small icon-only header buttons seen in Lofty cards (help + gear) */
+function CardToolIcons({ showGear = false }: { showGear?: boolean }) {
+  return (
+    <div className="flex items-center gap-1.5 text-gray-300">
+      <button className="hover:text-gray-500 transition-colors" aria-label="Help">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" strokeLinecap="round" />
+          <path d="M12 17h.01" strokeLinecap="round" />
+        </svg>
+      </button>
+      {showGear && (
+        <button className="hover:text-gray-500 transition-colors" aria-label="Settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<'holdings' | 'earnings' | 'activity'>('holdings');
+  const [updatesTab, setUpdatesTab] = useState<'new' | 'announcements'>('new');
+  const [eventsTab,  setEventsTab]  = useState<'appointments' | 'showings'>('appointments');
   const [withdrawStep, setWithdrawStep] = useState<WithdrawStep>('idle');
   const [withdrawAmount, setWithdrawAmount] = useState(totalMonthly.toFixed(2));
   const portfolioHistory = generatePortfolioHistory(12);
@@ -90,40 +150,49 @@ export default function DashboardPage() {
   const hasHoldings = holdings.length > 0;
 
   return (
-    <main className="min-h-screen bg-gray-50 pt-16">
+    <main className="min-h-screen bg-[#f5f6f8] pt-16">
 
-      {/* ─── Header ─── */}
-      <div className="gradient-hero py-10 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: 'linear-gradient(oklch(0.9 0 0) 1px, transparent 1px), linear-gradient(90deg, oklch(0.9 0 0) 1px, transparent 1px)',
-          backgroundSize: '48px 48px'
-        }} />
-        <div className="absolute top-0 right-0 w-80 h-80 rounded-full opacity-10 blur-3xl" style={{ background: 'radial-gradient(circle, oklch(0.52 0.22 278), transparent)' }} />
+      {/* ─── Greeting Row ─── */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-[28px] leading-none font-extrabold text-gray-900 flex items-center gap-2" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <span className="text-3xl">👋</span>
+            Good Morning, Alex
+            <span className="text-2xl">💼</span>
+            <span className="text-gray-900">!</span>
+          </h1>
+          <span className="h-5 w-px bg-gray-300" />
+          <button className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 font-medium">
+            My Portfolio
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
 
-        <div className="max-w-7xl mx-auto relative flex items-center justify-between">
-          <div>
-            <p className="text-white/40 text-sm mb-1 font-medium">Welcome back,</p>
-            <h1 className="text-3xl font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
-              Alex Johnson 👋
-            </h1>
-            <p className="text-white/40 text-xs mt-1">Last login: today at 9:41 AM</p>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <select className="appearance-none bg-white border border-gray-200 rounded-md py-2 pl-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-400/40 cursor-pointer">
+              <option>Today&apos;s Priorities</option>
+              <option>This Week</option>
+              <option>This Month</option>
+            </select>
+            <svg className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </div>
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={() => setWithdrawStep('selecting')}
-              variant="outline"
-              className="border-white/20 text-white hover:bg-white/10 bg-white/5 backdrop-blur-sm"
-            >
-              Withdraw Funds
-            </Button>
-            <Button className="gradient-brand text-white border-0 shadow-lg shadow-violet-500/30 hover:scale-[1.02] transition-all" asChild>
-              <Link href="/marketplace" id="dashboard-invest-btn">+ Invest More</Link>
-            </Button>
-          </div>
+          <button className="w-9 h-9 bg-white border border-gray-200 rounded-md flex items-center justify-center text-gray-500 hover:bg-gray-50" aria-label="Grid view">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3"  width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      {/* ─── Withdraw Flow ─── */}
+      {/* ─── Withdraw Flow (preserved functionality) ─── */}
       {withdrawStep !== 'idle' && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setWithdrawStep('idle')}>
           <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
@@ -195,243 +264,412 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* ─── Widget Grid ─── */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-        {/* ─── Summary Cards ─── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: 'Portfolio Value',  value: formatCurrency(totalValue),   sub: `↑ ${gainPct}% all-time`,       subColor: 'text-emerald-400', icon: '💼', dark: true  },
-            { label: 'Total Invested',   value: formatCurrency(totalInvested), sub: `${holdings.length} properties`, subColor: 'text-violet-200',  icon: '📈', dark: true  },
-            { label: 'Total Earned',     value: formatCurrency(totalEarned),   sub: 'Lifetime distributions',        subColor: 'text-emerald-600', icon: '💰', dark: false },
-            { label: 'Monthly Income',   value: formatCurrency(totalMonthly),  sub: 'Projected this month',          subColor: 'text-gray-400',    icon: '📅', dark: false },
-          ].map(card => (
-            <div key={card.label} className={`rounded-2xl p-5 border shadow-sm ${card.dark ? 'gradient-brand border-violet-600' : 'bg-white border-gray-100'}`}>
-              <div className="flex items-start justify-between mb-3">
-                <p className={`text-[10px] font-bold uppercase tracking-wider ${card.dark ? 'text-white/50' : 'text-gray-400'}`}>{card.label}</p>
-                <span className="text-xl">{card.icon}</span>
-              </div>
-              <p className={`text-2xl font-bold mb-1 ${card.dark ? 'text-white' : 'text-gray-900'}`} style={{ fontFamily: 'Syne, sans-serif' }}>
-                {card.value}
-              </p>
-              <p className={`text-xs font-medium ${card.subColor}`}>{card.sub}</p>
+        {/* Widget: New Updates / Announcements (tabs) */}
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setUpdatesTab('new')}
+                className={`relative pb-2 text-[15px] font-semibold transition-colors ${updatesTab === 'new' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                New Updates
+                {updatesTab === 'new' && <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-violet-600 rounded-full" />}
+              </button>
+              <button
+                onClick={() => setUpdatesTab('announcements')}
+                className={`relative pb-2 text-[15px] font-semibold transition-colors ${updatesTab === 'announcements' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                Announcements
+                {updatesTab === 'announcements' && <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-violet-600 rounded-full" />}
+              </button>
             </div>
-          ))}
-        </div>
-
-        {/* ─── Main Grid ─── */}
-        <div className="grid lg:grid-cols-3 gap-6">
-
-          {/* Left 2/3 */}
-          <div className="lg:col-span-2 space-y-6">
-
-            {/* Holdings/Earnings/Activity Tabs */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="flex border-b border-gray-100">
-                {(['holdings', 'earnings', 'activity'] as const).map(tab => (
-                  <button
-                    key={tab}
-                    id={`dashboard-tab-${tab}`}
-                    onClick={() => setActiveTab(tab)}
-                    className={`flex-1 py-3.5 text-[11px] font-bold uppercase tracking-wider capitalize transition-all border-b-2 ${
-                      activeTab === tab
-                        ? 'border-violet-600 text-violet-700 bg-violet-50/40'
-                        : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-
-              {/* Holdings */}
-              {activeTab === 'holdings' && (
-                <>
-                  {hasHoldings ? (
-                    <div className="divide-y divide-gray-50">
-                      {holdings.map(h => (
-                        <div key={h.id} className="p-4 flex items-center gap-4 hover:bg-gray-50/50 transition-colors group">
-                          <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
-                            <Image src={h.image} alt={h.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <Link href={`/properties/${h.id}`} className="font-bold text-sm text-gray-900 hover:text-violet-700 transition-colors block truncate">
-                                  {h.name}
-                                </Link>
-                                <p className="text-[10px] text-gray-400 font-medium">{h.city} · {h.tokens} tokens · {h.yield}% yield</p>
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                <p className="font-bold text-gray-900 text-sm">{formatCurrency(h.currentValue)}</p>
-                                <p className="text-[11px] text-emerald-500 font-bold">+{h.change}%</p>
-                              </div>
-                            </div>
-                            <div className="mt-2 flex items-center gap-3">
-                              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full gradient-brand rounded-full"
-                                  style={{ width: `${Math.min((h.currentValue / 3000) * 100, 100)}%` }}
-                                />
-                              </div>
-                              <p className="text-[10px] text-gray-400 font-medium">${h.monthlyIncome.toFixed(2)}/mo</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      <div className="p-4 bg-gray-50/50">
-                        <Button variant="outline" size="sm" className="w-full border-violet-200 text-violet-600 hover:bg-violet-50 font-semibold" asChild>
-                          <Link href="/marketplace">+ Add Property to Portfolio</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    /* Empty state */
-                    <div className="py-20 text-center px-6">
-                      <div className="w-20 h-20 rounded-3xl gradient-brand flex items-center justify-center mx-auto mb-5 shadow-xl shadow-violet-500/30 opacity-60">
-                        <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                          <path d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>No investments yet</h3>
-                      <p className="text-gray-400 text-sm max-w-xs mx-auto mb-6">Start building your real estate portfolio today. Invest in premium properties from $50.</p>
-                      <Button className="gradient-brand text-white border-0 shadow-lg shadow-violet-500/25 hover:scale-[1.02] transition-all" asChild>
-                        <Link href="/marketplace">Browse Properties →</Link>
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Earnings chart */}
-              {activeTab === 'earnings' && (
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5 font-medium">Portfolio performance (12 months)</p>
-                      <p className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'Syne, sans-serif' }}>{formatCurrency(totalValue)}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-400 mb-0.5 font-medium">ROI</p>
-                      <p className="text-2xl font-bold text-emerald-600">+{gainPct}%</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-[10px] text-gray-400 mb-4">
-                    <span className="flex items-center gap-1"><span className="w-3 h-0.5 inline-block rounded-full bg-violet-600" /> Portfolio Value</span>
-                    <span className="flex items-center gap-1"><span className="w-3 h-0.5 inline-block rounded-full border-t-2 border-dashed border-gray-400" /> Invested</span>
-                    <span className="flex items-center gap-1"><span className="w-3 h-0.5 inline-block rounded-full bg-emerald-500" /> ROI %</span>
-                  </div>
-
-                  <EarningsChart data={portfolioHistory} />
-
-                  {/* Per-property breakdown */}
-                  <div className="mt-6 space-y-3">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Monthly income by property</p>
-                    {holdings.map(h => (
-                      <div key={h.id} className="flex items-center gap-3">
-                        <div className="flex-1">
-                          <div className="flex justify-between text-xs text-gray-600 mb-1.5">
-                            <span className="font-semibold">{h.name}</span>
-                            <span className="font-bold text-emerald-600">+${h.monthlyIncome.toFixed(2)}/mo</span>
-                          </div>
-                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full gradient-brand rounded-full transition-all duration-700" style={{ width: `${(h.monthlyIncome / totalMonthly) * 100}%` }} />
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-400 w-10 text-right font-medium">{((h.monthlyIncome / totalMonthly) * 100).toFixed(0)}%</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Activity */}
-              {activeTab === 'activity' && (
-                <div className="divide-y divide-gray-50">
-                  {activity.map((a, i) => (
-                    <div key={i} className="flex items-center gap-4 p-4 hover:bg-gray-50/50 transition-colors">
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${
-                        a.type === 'distribution' ? 'bg-emerald-100 text-emerald-600' : 'bg-violet-100 text-violet-600'
-                      }`}>
-                        {a.type === 'distribution' ? '💸' : '🏠'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{a.label}</p>
-                        <p className="text-[10px] text-gray-400 font-medium">{a.date}</p>
-                      </div>
-                      <p className={`text-sm font-bold flex-shrink-0 ${
-                        a.type === 'distribution' ? 'text-emerald-600' : 'text-violet-600'
-                      }`}>
-                        {a.amount}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="flex items-center gap-2 text-gray-300">
+              <button className="hover:text-gray-500" aria-label="Edit">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button className="hover:text-gray-500" aria-label="Open">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M15 3h6v6M10 14L21 3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             </div>
           </div>
 
-          {/* Right 1/3 */}
-          <div className="space-y-5">
-
-            {/* Asset Allocation */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h2 className="font-bold text-gray-900 text-sm mb-4" style={{ fontFamily: 'Syne, sans-serif' }}>Asset Allocation</h2>
-              <AllocationChart slices={ALLOCATION_SLICES} />
-              <div className="space-y-2 mt-3">
-                {ALLOCATION_SLICES.map(slice => (
-                  <div key={slice.name} className="flex items-center gap-2.5">
-                    <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: slice.color }} />
-                    <div className="flex-1 flex justify-between text-xs">
-                      <span className="text-gray-600 font-medium">{slice.name}</span>
-                      <span className="font-bold text-gray-900">{formatCurrency(slice.amount)}</span>
+          {updatesTab === 'new' ? (
+            <div className="space-y-4">
+              {newUpdates.map((u, i) => (
+                <div key={i} className="border border-gray-100 rounded-lg overflow-hidden">
+                  <div className="p-3 flex items-start gap-2">
+                    <div className="w-8 h-8 rounded-full gradient-brand flex items-center justify-center flex-shrink-0">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 1L14 5V11L8 15L2 11V5L8 1Z" fill="white" fillOpacity="0.9" />
+                      </svg>
                     </div>
-                    <span className="text-[10px] text-gray-400 font-medium w-8 text-right">{slice.value}%</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900">{u.title}</p>
+                      <p className="text-[10px] text-gray-400">{u.tag} · 🌐</p>
+                    </div>
+                    <button className="text-gray-300 hover:text-gray-500" aria-label="Close">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M6 6l12 12M6 18L18 6" strokeLinecap="round" />
+                      </svg>
+                    </button>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <p className="text-xs text-gray-600 px-3 pb-2">{u.body}</p>
+                  <div className="grid grid-cols-3 gap-0.5 bg-gray-100 p-0.5">
+                    <div className="relative aspect-[4/3]"><Image src="/images/prop1.png" alt="" fill className="object-cover" /></div>
+                    <div className="relative aspect-[4/3]"><Image src="/images/prop2.png" alt="" fill className="object-cover" /></div>
+                    <div className="relative aspect-[4/3]"><Image src="/images/prop3.png" alt="" fill className="object-cover" /></div>
+                  </div>
+                  <div className="px-3 py-2 flex items-center justify-between">
+                    <p className="text-[11px] text-gray-600 max-w-[55%]">Maximize returns and reduce time on market</p>
+                    <button className="px-3 py-1.5 text-xs font-semibold rounded-md gradient-brand text-white shadow-sm">Boost Now</button>
+                  </div>
+                </div>
+              ))}
 
-            {/* Performance metrics */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
-              <h2 className="font-bold text-gray-900 text-sm" style={{ fontFamily: 'Syne, sans-serif' }}>Performance</h2>
-              {[
-                { label: 'All-time gain',     value: formatCurrency(totalGain), color: 'text-emerald-600' },
-                { label: 'Return %',          value: `+${gainPct}%`,            color: 'text-violet-600'  },
-                { label: 'Avg. Yield',        value: '7.4%',                   color: 'text-gray-900'    },
-                { label: 'Total Distributions', value: formatCurrency(totalEarned), color: 'text-gray-900' },
-                { label: 'Properties',        value: `${holdings.length}`,     color: 'text-gray-900'    },
-              ].map(m => (
-                <div key={m.label} className="flex justify-between items-center py-1.5 border-b border-gray-50 last:border-0">
-                  <p className="text-xs text-gray-500">{m.label}</p>
-                  <p className={`text-sm font-bold ${m.color}`}>{m.value}</p>
+              <Link href="/marketplace" className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group">
+                <div className="w-12 h-12 rounded-md bg-violet-50 flex items-center justify-center flex-shrink-0">
+                  🚀
+                </div>
+                <p className="text-sm text-gray-700 group-hover:text-violet-700">Check Equivest&apos;s latest feature updates!</p>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {announcements.map((a, i) => (
+                <div key={i} className="border-b border-gray-50 pb-3 last:border-0 last:pb-0">
+                  <p className="text-sm font-bold text-gray-900">{a.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{a.body}</p>
                 </div>
               ))}
             </div>
+          )}
+        </section>
 
-            {/* Next distribution */}
-            <div className="gradient-brand rounded-2xl p-5 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 blur-2xl" style={{ background: 'white', transform: 'translate(20%, -20%)' }} />
-              <div className="relative">
-                <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-2">Next Distribution</p>
-                <p className="text-white text-3xl font-bold mb-0.5" style={{ fontFamily: 'Syne, sans-serif' }}>
-                  {formatCurrency(totalMonthly)}
-                </p>
-                <p className="text-white/50 text-xs mb-4">Estimated · May 15, 2025</p>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                    <div className="h-full bg-white/70 rounded-full" style={{ width: '73%' }} />
+        {/* Widget: Today's New Leads → Today's New Investments */}
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-[15px] font-semibold text-gray-900">Today&apos;s New Investments</h2>
+            <CardToolIcons showGear />
+          </div>
+          <div className="h-1 bg-gray-100 rounded-full overflow-hidden mb-3">
+            <div className="h-full gradient-brand rounded-full" style={{ width: hasHoldings ? '62%' : '0%' }} />
+          </div>
+          <p className="text-sm text-gray-700 mb-3">
+            Total: <span className="font-semibold">{holdings.length}</span> ({hasHoldings ? 0 : holdings.length} untouched)
+          </p>
+          {hasHoldings ? (
+            <div className="space-y-3">
+              {holdings.slice(0, 3).map(h => (
+                <Link href={`/properties/${h.id}`} key={h.id} className="flex items-center gap-3 py-1 group">
+                  <div className="relative w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
+                    <Image src={h.image} alt={h.name} fill className="object-cover" />
                   </div>
-                  <p className="text-white/50 text-[10px] font-medium">73% of month complete</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 group-hover:text-violet-700 transition-colors truncate">{h.name}</p>
+                    <p className="text-[11px] text-gray-400 truncate">Buyer · {h.city} · {h.yield}% yield</p>
+                  </div>
+                  <span className="inline-flex items-center justify-center min-w-[28px] h-5 px-1.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700">
+                    {h.tokens}
+                  </span>
+                </Link>
+              ))}
+              <Link href="/marketplace" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-2">View All &gt;</Link>
+            </div>
+          ) : (
+            <EmptyIllustration />
+          )}
+        </section>
+
+        {/* Widget: Today's Opportunities */}
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[15px] font-semibold text-gray-900">Today&apos;s Opportunities</h2>
+            <CardToolIcons />
+          </div>
+          <div className="grid grid-cols-3 gap-2 bg-[#f5f6f8] rounded-lg p-3 mb-4">
+            {[
+              { label: 'High Yield',   value: holdings.filter(h => h.yield >= 7).length },
+              { label: 'Top Gainers',  value: holdings.filter(h => h.change >= 10).length },
+              { label: 'Back to Site', value: Math.max(0, 12 - holdings.length) },
+            ].map(s => (
+              <div key={s.label} className="text-center">
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide">{s.label}</p>
+                <p className="text-2xl font-extrabold text-gray-900 mt-1" style={{ fontFamily: 'Syne, sans-serif' }}>{s.value}</p>
+              </div>
+            ))}
+          </div>
+          {hasHoldings ? (
+            <div className="space-y-2.5">
+              {holdings.map(h => (
+                <div key={h.id} className="flex items-center gap-2.5">
+                  <div className="w-2 h-2 rounded-full bg-violet-500" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 truncate">{h.name}</p>
+                    <p className="text-[10px] text-gray-400">Buyer · {h.type}</p>
+                  </div>
+                  <p className="text-xs font-bold text-emerald-600">+{h.change}%</p>
                 </div>
-                <button
-                  onClick={() => setWithdrawStep('selecting')}
-                  className="w-full py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold border border-white/20 transition-all"
-                >
-                  Withdraw earnings →
-                </button>
+              ))}
+            </div>
+          ) : (
+            <EmptyIllustration />
+          )}
+        </section>
+
+        {/* Widget: Need Keep In Touch → Upcoming Distributions */}
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[15px] font-semibold text-gray-900">Need Keep In Touch</h2>
+            <CardToolIcons showGear />
+          </div>
+          <div className="grid grid-cols-2 gap-2 bg-[#f5f6f8] rounded-lg p-3 mb-4">
+            <div className="text-center">
+              <p className="text-[11px] text-gray-500">Distributions</p>
+              <p className="text-xl font-extrabold text-gray-900 mt-0.5" style={{ fontFamily: 'Syne, sans-serif' }}>{holdings.length}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[11px] text-gray-500">Follow-Up</p>
+              <p className="text-xl font-extrabold text-gray-900 mt-0.5" style={{ fontFamily: 'Syne, sans-serif' }}>{activity.length}</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {holdings.map(h => (
+              <div key={h.id} className="pb-3 border-b border-gray-50 last:border-0 last:pb-0">
+                <p className="text-sm font-semibold text-gray-900">{h.name}</p>
+                <p className="text-[11px] text-gray-500">Buyer</p>
+                <p className="text-[11px] text-gray-500">Next distribution: May 15, 2026</p>
+              </div>
+            ))}
+          </div>
+          <Link href="#" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View All &gt;</Link>
+        </section>
+
+        {/* Widget: Transactions */}
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[15px] font-semibold text-gray-900">Transactions</h2>
+            <CardToolIcons showGear />
+          </div>
+          <div className="grid grid-cols-2 gap-2 bg-[#f5f6f8] rounded-lg p-3 mb-4">
+            <div className="text-center">
+              <p className="text-[11px] text-gray-500">Near Deadline</p>
+              <p className="text-xl font-extrabold text-gray-900 mt-0.5" style={{ fontFamily: 'Syne, sans-serif' }}>{activity.filter(a => a.type === 'distribution').length}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[11px] text-gray-500">Expired</p>
+              <p className="text-xl font-extrabold text-gray-900 mt-0.5" style={{ fontFamily: 'Syne, sans-serif' }}>0</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {activity.slice(0, 4).map((a, i) => (
+              <div key={i} className="flex items-center justify-between gap-2 pb-2 border-b border-gray-50 last:border-0">
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold text-gray-900 truncate">{a.label}</p>
+                  <p className="text-[10px] text-gray-400">{a.date} · {a.type === 'distribution' ? 'Income' : 'Purchase'}</p>
+                </div>
+                <p className={`text-xs font-bold flex-shrink-0 ${a.type === 'distribution' ? 'text-emerald-600' : 'text-gray-700'}`}>{a.amount}</p>
+              </div>
+            ))}
+          </div>
+          <Link href="#" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View All &gt;</Link>
+        </section>
+
+        {/* Widget: Today's Tasks → Quick Actions */}
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[15px] font-semibold text-gray-900">Today&apos;s Tasks</h2>
+            <CardToolIcons />
+          </div>
+          <div className="grid grid-cols-4 gap-2 mb-4">
+            {[
+              { label: 'Invest',   value: holdings.length, bg: 'bg-violet-50',   color: 'text-violet-700'  },
+              { label: 'Withdraw', value: 1,               bg: 'bg-sky-50',      color: 'text-sky-700'     },
+              { label: 'Browse',   value: 12,              bg: 'bg-emerald-50',  color: 'text-emerald-700' },
+              { label: 'Refer',    value: 0,               bg: 'bg-amber-50',    color: 'text-amber-700'   },
+            ].map(t => (
+              <div key={t.label} className={`rounded-md ${t.bg} p-2.5 text-center`}>
+                <p className={`text-[10px] font-semibold ${t.color}`}>{t.label}</p>
+                <p className={`text-lg font-extrabold mt-0.5 ${t.color}`} style={{ fontFamily: 'Syne, sans-serif' }}>{t.value}</p>
+              </div>
+            ))}
+          </div>
+          <div className="space-y-3">
+            <Link href="/marketplace" className="flex items-center justify-between py-2 border-b border-gray-50 hover:bg-gray-50/60 rounded px-1">
+              <div>
+                <p className="text-[13px] font-semibold text-gray-900">Invest in Marina View Lofts</p>
+                <p className="text-[10px] text-gray-400">New listing · San Diego, CA</p>
+              </div>
+              <p className="text-[11px] font-semibold text-violet-600">Today</p>
+            </Link>
+            <button onClick={() => setWithdrawStep('selecting')} className="w-full flex items-center justify-between py-2 hover:bg-gray-50/60 rounded px-1">
+              <div className="text-left">
+                <p className="text-[13px] font-semibold text-gray-900">Withdraw Earnings</p>
+                <p className="text-[10px] text-gray-400">Available: {formatCurrency(totalEarned)}</p>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300">
+                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        {/* Widget: Appointments / Showings → Events tabs */}
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setEventsTab('appointments')}
+                className={`relative pb-2 text-[15px] font-semibold ${eventsTab === 'appointments' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                Appointments
+                {eventsTab === 'appointments' && <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-violet-600 rounded-full" />}
+              </button>
+              <button
+                onClick={() => setEventsTab('showings')}
+                className={`relative pb-2 text-[15px] font-semibold ${eventsTab === 'showings' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                Showings
+                {eventsTab === 'showings' && <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-violet-600 rounded-full" />}
+              </button>
+            </div>
+            <CardToolIcons />
+          </div>
+          <div className="h-1 bg-gray-100 rounded-full overflow-hidden mb-3">
+            <div className="h-full bg-violet-500 rounded-full" style={{ width: '20%' }} />
+          </div>
+          <p className="text-sm text-gray-700 mb-3">
+            Total: <span className="font-semibold">{eventsTab === 'appointments' ? '1' : '0'}</span> ({eventsTab === 'appointments' ? '0' : '0'} Incomplete)
+          </p>
+          {eventsTab === 'appointments' ? (
+            <div className="space-y-3">
+              <div className="pb-3 border-b border-gray-50 last:border-0">
+                <p className="text-sm font-semibold text-gray-900">Next Distribution</p>
+                <p className="text-[11px] text-gray-500">May 15, 2026 · {formatCurrency(totalMonthly)} expected</p>
               </div>
             </div>
+          ) : (
+            <EmptyIllustration />
+          )}
+        </section>
+
+        {/* Widget: My Listings → My Holdings */}
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[15px] font-semibold text-gray-900">My Listings</h2>
+            <CardToolIcons />
+          </div>
+          <div className="space-y-3">
+            {holdings.map(h => (
+              <Link href={`/properties/${h.id}`} key={h.id} className="flex items-center gap-3 group">
+                <div className="relative w-14 h-14 rounded-md overflow-hidden flex-shrink-0">
+                  <Image src={h.image} alt={h.name} fill className="object-cover group-hover:scale-105 transition-transform" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-gray-900 group-hover:text-violet-700 truncate">{h.name}</p>
+                  <p className="text-[11px] text-gray-500 truncate">{h.city}</p>
+                  <p className="text-[11px] text-violet-600 mt-0.5">{h.tokens} tokens · {formatCurrency(h.currentValue)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <Link href="/marketplace" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View All &gt;</Link>
+        </section>
+
+        {/* Widget: Hot Sheets */}
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[15px] font-semibold text-gray-900">Hot Sheets</h2>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {hotSheets.map(s => (
+              <div key={s.label} className="flex items-center justify-between py-2.5">
+                <div>
+                  <p className="text-[13px] font-semibold text-gray-900">{s.label}</p>
+                  <p className="text-[11px] text-gray-400">{s.count}</p>
+                </div>
+                {s.updates && (
+                  <span className="px-2 py-1 text-[11px] font-bold rounded bg-emerald-50 text-emerald-600">{s.updates}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+      </div>
+
+      {/* ─── Performance + Allocation Row (Equivest specifics kept) ─── */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 grid lg:grid-cols-3 gap-4">
+
+        <section className="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">Portfolio Performance · 12 mo</p>
+              <p className="text-2xl font-extrabold text-gray-900" style={{ fontFamily: 'Syne, sans-serif' }}>{formatCurrency(totalValue)}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">ROI</p>
+              <p className="text-xl font-bold text-emerald-600">+{gainPct}%</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-[10px] text-gray-400 mb-3">
+            <span className="flex items-center gap-1"><span className="w-3 h-0.5 inline-block rounded-full bg-violet-600" /> Portfolio Value</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-0.5 inline-block rounded-full border-t-2 border-dashed border-gray-400" /> Invested</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-0.5 inline-block rounded-full bg-emerald-500" /> ROI %</span>
+          </div>
+          <EarningsChart data={portfolioHistory} />
+        </section>
+
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[15px] font-semibold text-gray-900">Asset Allocation</h2>
+            <CardToolIcons />
+          </div>
+          <AllocationChart slices={ALLOCATION_SLICES} />
+          <div className="space-y-2 mt-3">
+            {ALLOCATION_SLICES.map(slice => (
+              <div key={slice.name} className="flex items-center gap-2.5">
+                <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: slice.color }} />
+                <div className="flex-1 flex justify-between text-xs">
+                  <span className="text-gray-600 font-medium">{slice.name}</span>
+                  <span className="font-bold text-gray-900">{formatCurrency(slice.amount)}</span>
+                </div>
+                <span className="text-[10px] text-gray-400 font-medium w-8 text-right">{slice.value}%</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      {/* ─── Bottom CTA: Next Distribution (kept) ─── */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div className="gradient-brand rounded-xl p-5 relative overflow-hidden flex flex-wrap items-center justify-between gap-4">
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 blur-2xl" style={{ background: 'white', transform: 'translate(20%, -20%)' }} />
+          <div className="relative">
+            <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-1">Next Distribution</p>
+            <p className="text-white text-2xl font-extrabold" style={{ fontFamily: 'Syne, sans-serif' }}>
+              {formatCurrency(totalMonthly)} <span className="text-white/60 text-sm font-medium">· Est. May 15, 2026</span>
+            </p>
+          </div>
+          <div className="relative flex items-center gap-3">
+            <Button
+              onClick={() => setWithdrawStep('selecting')}
+              variant="outline"
+              className="border-white/30 text-white hover:bg-white/10 bg-white/5 backdrop-blur-sm"
+            >
+              Withdraw Funds
+            </Button>
+            <Link href="/marketplace" id="dashboard-invest-btn">
+              <Button className="bg-white text-violet-700 border-0 shadow-lg hover:scale-[1.02] transition-all font-semibold">+ Invest More</Button>
+            </Link>
           </div>
         </div>
       </div>
