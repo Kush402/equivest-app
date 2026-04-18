@@ -8,10 +8,13 @@ import { formatCurrency } from '@/lib/properties';
 import { generatePortfolioHistory } from '@/lib/mockChartData';
 import { EarningsChartClient as EarningsChart, AllocationChartClient as AllocationChart } from '@/components/charts/DashboardChartClients';
 import { OnboardingModal, useOnboardingComplete, type OnboardingProfile } from '@/components/OnboardingModal';
+import DashboardTour from '@/components/DashboardTour';
 
-const WIDGETS_KEY = 'equivest_widgets_v1';
+const WIDGETS_KEY  = 'equivest_widgets_v1';
+const TOUR_DONE_KEY = 'equivest_tour_complete_v1';
 
 type WidgetId =
+  | 'portfolio-stats'
   | 'new-updates'
   | 'today-new-investments'
   | 'todays-opportunities'
@@ -20,21 +23,29 @@ type WidgetId =
   | 'todays-tasks'
   | 'appointments'
   | 'my-listings'
-  | 'hot-sheets';
+  | 'hot-sheets'
+  | 'market-pulse'
+  | 'ai-recommendations';
 
 const WIDGET_META: Record<WidgetId, { title: string; description: string }> = {
-  'new-updates':            { title: 'New Updates',             description: 'Platform news, announcements, and sponsored listings' },
-  'today-new-investments':  { title: "Today's New Investments", description: 'Your holdings and recent token purchases' },
-  'todays-opportunities':   { title: "Today's Opportunities",   description: 'High-yield and top-gaining properties' },
-  'need-keep-in-touch':     { title: 'Need Keep In Touch',      description: 'Upcoming distributions and follow-up reminders' },
-  'transactions':           { title: 'Transactions',            description: 'Recent purchases and rental income activity' },
-  'todays-tasks':           { title: "Today's Tasks",           description: 'Quick actions: invest, withdraw, browse, refer' },
-  'appointments':           { title: 'Appointments',            description: 'Scheduled distribution events and milestones' },
-  'my-listings':            { title: 'My Holdings',             description: 'All your tokenized property investments' },
-  'hot-sheets':             { title: 'Hot Sheets',              description: 'Market-wide: new listings, price reductions, high yields' },
+  'portfolio-stats':        { title: 'Portfolio Overview',        description: 'Total invested, current value, earnings, and monthly income at a glance' },
+  'new-updates':            { title: 'New Updates',               description: 'Platform news, announcements, and sponsored listings' },
+  'today-new-investments':  { title: "Today's New Investments",   description: 'Your holdings and recent token purchases' },
+  'todays-opportunities':   { title: "Today's Opportunities",     description: 'High-yield and top-gaining properties' },
+  'need-keep-in-touch':     { title: 'Need Keep In Touch',        description: 'Upcoming distributions and follow-up reminders' },
+  'transactions':           { title: 'Transactions',              description: 'Recent purchases and rental income activity' },
+  'todays-tasks':           { title: "Today's Tasks",             description: 'Quick actions: invest, withdraw, browse, refer' },
+  'appointments':           { title: 'Appointments',              description: 'Scheduled distribution events and milestones' },
+  'my-listings':            { title: 'My Holdings',               description: 'All your tokenized property investments' },
+  'hot-sheets':             { title: 'Hot Sheets',                description: 'Market-wide: new listings, price reductions, high yields' },
+  'market-pulse':           { title: 'Market Pulse',              description: 'Live platform metrics: listings, average yield, AUM, trending cities' },
+  'ai-recommendations':     { title: 'AI Recommendations',        description: 'Personalized property picks based on your portfolio and goals' },
 };
 
-const ALWAYS_ON: WidgetId[] = ['new-updates', 'transactions', 'my-listings', 'todays-tasks'];
+const ALWAYS_ON: WidgetId[] = [
+  'portfolio-stats', 'new-updates', 'transactions', 'my-listings',
+  'todays-tasks', 'market-pulse', 'ai-recommendations',
+];
 
 function deriveDefaultWidgets(profile: OnboardingProfile | null): WidgetId[] {
   const ids = new Set<WidgetId>(ALWAYS_ON);
@@ -203,12 +214,17 @@ export default function DashboardPage() {
   const [agentName, setAgentName] = useState('Alex');
   const [visibleWidgets, setVisibleWidgets] = useState<Set<WidgetId>>(new Set(ALWAYS_ON));
   const [showWidgetPanel, setShowWidgetPanel] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(WIDGETS_KEY);
       if (raw) {
-        setVisibleWidgets(new Set(JSON.parse(raw) as WidgetId[]));
+        // Union stored widgets with ALWAYS_ON so new widgets appear for existing users
+        const stored = new Set(JSON.parse(raw) as WidgetId[]);
+        const merged = new Set([...stored, ...ALWAYS_ON]);
+        setVisibleWidgets(merged);
+        localStorage.setItem(WIDGETS_KEY, JSON.stringify([...merged]));
       } else if (profile) {
         const defaults = deriveDefaultWidgets(profile);
         setVisibleWidgets(new Set(defaults));
@@ -256,6 +272,20 @@ export default function DashboardPage() {
             setVisibleWidgets(new Set(defaults));
             localStorage.setItem(WIDGETS_KEY, JSON.stringify(defaults));
             setIsComplete(true);
+            // Auto-launch tour for first-time users
+            if (!localStorage.getItem(TOUR_DONE_KEY)) {
+              setTimeout(() => setShowTour(true), 600);
+            }
+          }}
+        />
+      )}
+
+      {/* ─── Dashboard Tour ─── */}
+      {showTour && (
+        <DashboardTour
+          onDone={() => {
+            setShowTour(false);
+            localStorage.setItem(TOUR_DONE_KEY, '1');
           }}
         />
       )}
@@ -277,13 +307,25 @@ export default function DashboardPage() {
             </svg>
           </button>
           {isComplete && (
-            <button
-              onClick={() => { localStorage.removeItem('lofty_onboarding_v2'); localStorage.removeItem(WIDGETS_KEY); setIsComplete(false); setAgentName('Alex'); setProfile(null); setVisibleWidgets(new Set(ALWAYS_ON)); }}
-              className="text-[11px] text-gray-300 hover:text-violet-500 transition-colors font-medium border border-gray-200 hover:border-violet-300 rounded-md px-2 py-1"
-              title="Re-run AI onboarding"
-            >
-              ✦ Re-run AI Setup
-            </button>
+            <>
+              <button
+                onClick={() => { localStorage.removeItem('lofty_onboarding_v2'); localStorage.removeItem(WIDGETS_KEY); localStorage.removeItem(TOUR_DONE_KEY); setIsComplete(false); setAgentName('Alex'); setProfile(null); setVisibleWidgets(new Set(ALWAYS_ON)); }}
+                className="text-[11px] text-gray-300 hover:text-violet-500 transition-colors font-medium border border-gray-200 hover:border-violet-300 rounded-md px-2 py-1"
+                title="Re-run AI onboarding"
+              >
+                ✦ Re-run AI Setup
+              </button>
+              <button
+                onClick={() => setShowTour(true)}
+                className="text-[11px] text-gray-300 hover:text-violet-500 transition-colors font-medium border border-gray-200 hover:border-violet-300 rounded-md px-2 py-1 flex items-center gap-1"
+                title="Take a guided tour"
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3" strokeLinecap="round"/>
+                </svg>
+                Tour
+              </button>
+            </>
           )}
         </div>
 
@@ -384,8 +426,41 @@ export default function DashboardPage() {
       {/* ─── Widget Grid ─── */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
+        {/* Widget: Portfolio Stats */}
+        {show('portfolio-stats') && (
+          <section data-widget-id="portfolio-stats" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[180px]">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[15px] font-semibold text-gray-900">Portfolio Overview</h2>
+              <div className="flex items-center gap-1.5 text-gray-300">
+                <CardToolIcons />
+                <button onClick={() => removeWidget('portfolio-stats')} className="hover:text-red-400" aria-label="Remove widget">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {[
+                { label: 'Total Invested',  value: formatCurrency(totalInvested), sub: 'across 3 properties', color: 'text-gray-900' },
+                { label: 'Current Value',   value: formatCurrency(totalValue),    sub: `+${gainPct}% gain`,   color: 'text-emerald-600' },
+                { label: 'Total Earned',    value: formatCurrency(totalEarned),   sub: 'cumulative income',   color: 'text-violet-600' },
+                { label: 'Monthly Income',  value: formatCurrency(totalMonthly),  sub: 'est. next payout',    color: 'text-sky-600' },
+              ].map(s => (
+                <div key={s.label} className="bg-[#f5f6f8] rounded-lg p-3">
+                  <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-1">{s.label}</p>
+                  <p className={`text-[18px] font-extrabold leading-none ${s.color}`} style={{ fontFamily: 'Syne, sans-serif' }}>{s.value}</p>
+                  <p className="text-[10px] text-gray-400 mt-1">{s.sub}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between text-[12px]">
+              <span className="text-gray-400">Total gain: <span className="font-bold text-emerald-600">+{formatCurrency(totalGain)}</span></span>
+              <Link href="/marketplace" className="font-semibold text-violet-600 hover:text-violet-800">+ Invest More</Link>
+            </div>
+          </section>
+        )}
+
         {/* Widget: New Updates / Announcements (tabs) */}
-        {show('new-updates') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {show('new-updates') && <section data-widget-id="new-updates" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-4">
               <button
@@ -475,7 +550,7 @@ export default function DashboardPage() {
         </section>}
 
         {/* Widget: Today's New Investments */}
-        {show('today-new-investments') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {show('today-new-investments') && <section data-widget-id="today-new-investments" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-[15px] font-semibold text-gray-900">Today&apos;s New Investments</h2>
             <div className="flex items-center gap-1.5 text-gray-300">
@@ -515,7 +590,7 @@ export default function DashboardPage() {
         </section>}
 
         {/* Widget: Today's Opportunities */}
-        {show('todays-opportunities') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {show('todays-opportunities') && <section data-widget-id="todays-opportunities" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-semibold text-gray-900">Today&apos;s Opportunities</h2>
             <div className="flex items-center gap-1.5 text-gray-300">
@@ -556,7 +631,7 @@ export default function DashboardPage() {
         </section>}
 
         {/* Widget: Need Keep In Touch */}
-        {show('need-keep-in-touch') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {show('need-keep-in-touch') && <section data-widget-id="need-keep-in-touch" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-semibold text-gray-900">Need Keep In Touch</h2>
             <div className="flex items-center gap-1.5 text-gray-300">
@@ -589,7 +664,7 @@ export default function DashboardPage() {
         </section>}
 
         {/* Widget: Transactions */}
-        {show('transactions') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {show('transactions') && <section data-widget-id="transactions" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-semibold text-gray-900">Transactions</h2>
             <div className="flex items-center gap-1.5 text-gray-300">
@@ -624,7 +699,7 @@ export default function DashboardPage() {
         </section>}
 
         {/* Widget: Today's Tasks */}
-        {show('todays-tasks') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {show('todays-tasks') && <section data-widget-id="todays-tasks" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-semibold text-gray-900">Today&apos;s Tasks</h2>
             <div className="flex items-center gap-1.5 text-gray-300">
@@ -668,7 +743,7 @@ export default function DashboardPage() {
         </section>}
 
         {/* Widget: Appointments / Showings */}
-        {show('appointments') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {show('appointments') && <section data-widget-id="appointments" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-4">
               <button
@@ -712,7 +787,7 @@ export default function DashboardPage() {
         </section>}
 
         {/* Widget: My Holdings */}
-        {show('my-listings') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {show('my-listings') && <section data-widget-id="my-listings" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-semibold text-gray-900">My Holdings</h2>
             <div className="flex items-center gap-1.5 text-gray-300">
@@ -740,7 +815,7 @@ export default function DashboardPage() {
         </section>}
 
         {/* Widget: Hot Sheets */}
-        {show('hot-sheets') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {show('hot-sheets') && <section data-widget-id="hot-sheets" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-semibold text-gray-900">Hot Sheets</h2>
             <button onClick={() => removeWidget('hot-sheets')} className="text-gray-300 hover:text-red-400" aria-label="Remove widget">
@@ -761,6 +836,97 @@ export default function DashboardPage() {
             ))}
           </div>
         </section>}
+
+        {/* Widget: Market Pulse */}
+        {show('market-pulse') && (
+          <section data-widget-id="market-pulse" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-[15px] font-semibold text-gray-900">Market Pulse</h2>
+              <div className="flex items-center gap-1.5 text-gray-300">
+                <CardToolIcons />
+                <button onClick={() => removeWidget('market-pulse')} className="hover:text-red-400" aria-label="Remove widget">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 bg-[#f5f6f8] rounded-lg p-3 mb-4">
+              {[
+                { label: 'New Listings',  value: '1,247',  sub: 'this week',       color: 'text-violet-600' },
+                { label: 'Avg. Yield',    value: '7.2%',   sub: 'platform-wide',   color: 'text-emerald-600' },
+                { label: 'Total AUM',     value: '$142M',  sub: 'managed on-chain', color: 'text-sky-600' },
+                { label: 'Tokenizations', value: '38',     sub: 'new this month',  color: 'text-amber-600' },
+              ].map(s => (
+                <div key={s.label} className="text-center">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide">{s.label}</p>
+                  <p className={`text-xl font-extrabold mt-0.5 ${s.color}`} style={{ fontFamily: 'Syne, sans-serif' }}>{s.value}</p>
+                  <p className="text-[10px] text-gray-400">{s.sub}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Trending Cities</p>
+            <div className="space-y-2">
+              {[
+                { city: 'Miami, FL',     yield: '8.1%', new: 214, color: 'bg-violet-500' },
+                { city: 'Austin, TX',    yield: '7.6%', new: 187, color: 'bg-emerald-500' },
+                { city: 'Boston, MA',    yield: '7.4%', new: 155, color: 'bg-sky-500' },
+              ].map(c => (
+                <div key={c.city} className="flex items-center gap-2.5">
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${c.color}`} />
+                  <div className="flex-1 flex items-center justify-between">
+                    <p className="text-[12px] font-semibold text-gray-900">{c.city}</p>
+                    <div className="flex items-center gap-3 text-[11px] text-gray-400">
+                      <span className="font-bold text-emerald-600">{c.yield}</span>
+                      <span>{c.new} new</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Widget: AI Recommendations */}
+        {show('ai-recommendations') && (
+          <section data-widget-id="ai-recommendations" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <h2 className="text-[15px] font-semibold text-gray-900">AI Recommendations</h2>
+                <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md gradient-brand text-white">AI</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-gray-300">
+                <CardToolIcons />
+                <button onClick={() => removeWidget('ai-recommendations')} className="hover:text-red-400" aria-label="Remove widget">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-400 mb-3">Based on your 7%+ yield preference &amp; portfolio mix</p>
+            <div className="space-y-3">
+              {[
+                { id: 'azure-bay-residences', name: 'Marina View Lofts',   city: 'San Diego, CA', image: '/images/prop1.png', yield: 8.3, reason: 'Matches your coastal multifamily focus',         tag: 'High Yield' },
+                { id: 'highland-tower',        name: 'Riverside Commons',  city: 'Austin, TX',    image: '/images/prop2.png', yield: 7.9, reason: 'Diversifies your Midwest-heavy allocation',      tag: 'Trending'   },
+                { id: 'centrepoint-plaza',     name: 'Pinnacle Office Park', city: 'Nashville, TN', image: '/images/prop3.png', yield: 7.5, reason: 'Lower correlation to your existing holdings',   tag: 'Stable'     },
+              ].map(rec => (
+                <div key={rec.id} className="flex items-start gap-3 pb-2.5 border-b border-gray-50 last:border-0 last:pb-0">
+                  <div className="relative w-11 h-11 rounded-md overflow-hidden flex-shrink-0">
+                    <Image src={rec.image} alt={rec.name} fill className="object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-[13px] font-semibold text-gray-900 truncate">{rec.name}</p>
+                      <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-violet-100 text-violet-700 flex-shrink-0">{rec.tag}</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 truncate">{rec.city} · {rec.yield}% yield</p>
+                    <p className="text-[10px] text-violet-600 mt-0.5 italic truncate">{rec.reason}</p>
+                  </div>
+                  <Link href="/marketplace" className="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg gradient-brand text-white shadow-sm flex-shrink-0">
+                    Invest
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Widget: Add Card */}
         <button
@@ -830,7 +996,7 @@ export default function DashboardPage() {
       {/* ─── Performance + Allocation Row (Equivest specifics kept) ─── */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 grid lg:grid-cols-3 gap-4">
 
-        <section className="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5">
+        <section data-widget-id="portfolio-performance" className="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">Portfolio Performance · 12 mo</p>
@@ -849,7 +1015,7 @@ export default function DashboardPage() {
           <EarningsChart data={portfolioHistory} />
         </section>
 
-        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5">
+        <section data-widget-id="asset-allocation" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-semibold text-gray-900">Asset Allocation</h2>
             <CardToolIcons />
