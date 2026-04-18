@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import type { ChatCompletionTool } from 'openai/resources/chat/completions';
 import {
   AgentProfile, AgentExperience, AgentSpecialty, TeamSize, PrimaryGoal,
 } from './schema';
@@ -29,71 +29,80 @@ Your job is to understand each agent through natural conversation, then use your
 - At minimum you need: experience, primaryGoal, and teamSize to complete onboarding
 - If agent is vague ("I handle everything"), pick the closest option and confirm it`;
 
-export const TOOLS: Anthropic.Tool[] = [
+export const TOOLS: ChatCompletionTool[] = [
   {
-    name: 'record_preference',
-    description: 'Record a single agent preference field as you learn it. Call in real time during conversation.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        field: {
-          type: 'string',
-          enum: [
-            'name', 'experience', 'specialties', 'markets', 'monthlyLeads',
-            'teamSize', 'primaryGoal', 'wantsMarketingAutomation', 'wantsLeadScoring',
-            'wantsAIInsights', 'wantsTransactionTracking', 'wantsShowingScheduler', 'usesExistingCRM',
-          ],
-          description: 'The AgentProfile field to update',
-        },
-        value: {
-          description: 'Value to set. Arrays for array fields, booleans for feature flags, numbers for numeric fields.',
-        },
-      },
-      required: ['field', 'value'],
-    },
-  },
-  {
-    name: 'suggest_features',
-    description: 'Recommend specific Lofty features based on what the agent just described. Use when an agent mentions a pain point.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        painPoint: { type: 'string', description: 'What the agent said they struggle with' },
-        features:  { type: 'array',  items: { type: 'string' }, description: 'Widget/feature types that would help' },
-      },
-      required: ['painPoint', 'features'],
-    },
-  },
-  {
-    name: 'complete_onboarding',
-    description: 'Finalize onboarding with the complete agent profile. Generates their personalized dashboard. Call when you have at minimum: experience, primaryGoal, and teamSize.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        profile: {
-          type: 'object',
-          description: 'Complete AgentProfile',
-          properties: {
-            name:                     { type: 'string' },
-            experience:               { type: 'string', enum: ['new-agent', 'growing', 'established', 'top-producer', 'team-lead'] },
-            specialties:              { type: 'array', items: { type: 'string' } },
-            markets:                  { type: 'array', items: { type: 'string' } },
-            monthlyLeads:             { type: 'number' },
-            teamSize:                 { type: 'string', enum: ['solo', 'small-team', 'large-team', 'brokerage'] },
-            primaryGoal:              { type: 'string', enum: ['close-more-deals', 'grow-team', 'better-marketing', 'save-time', 'scale-business', 'manage-leads'] },
-            wantsMarketingAutomation: { type: 'boolean' },
-            wantsLeadScoring:         { type: 'boolean' },
-            wantsAIInsights:          { type: 'boolean' },
-            wantsTransactionTracking: { type: 'boolean' },
-            wantsShowingScheduler:    { type: 'boolean' },
-            usesExistingCRM:          { type: 'boolean' },
+    type: 'function',
+    function: {
+      name: 'record_preference',
+      description: 'Record a single agent preference field as you learn it. Call in real time during conversation.',
+      parameters: {
+        type: 'object',
+        properties: {
+          field: {
+            type: 'string',
+            enum: [
+              'name', 'experience', 'specialties', 'markets', 'monthlyLeads',
+              'teamSize', 'primaryGoal', 'wantsMarketingAutomation', 'wantsLeadScoring',
+              'wantsAIInsights', 'wantsTransactionTracking', 'wantsShowingScheduler', 'usesExistingCRM',
+            ],
+            description: 'The AgentProfile field to update',
           },
-          required: ['experience', 'teamSize', 'primaryGoal', 'specialties', 'markets', 'monthlyLeads',
-                     'wantsMarketingAutomation', 'wantsLeadScoring', 'wantsAIInsights',
-                     'wantsTransactionTracking', 'wantsShowingScheduler', 'usesExistingCRM'],
+          value: {
+            description: 'Value to set. Arrays for array fields, booleans for feature flags, numbers for numeric fields.',
+          },
         },
+        required: ['field', 'value'],
       },
-      required: ['profile'],
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'suggest_features',
+      description: 'Recommend specific Lofty features based on what the agent just described. Use when an agent mentions a pain point.',
+      parameters: {
+        type: 'object',
+        properties: {
+          painPoint: { type: 'string', description: 'What the agent said they struggle with' },
+          features:  { type: 'array',  items: { type: 'string' }, description: 'Widget/feature types that would help' },
+        },
+        required: ['painPoint', 'features'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'complete_onboarding',
+      description: 'Finalize onboarding with the complete agent profile. Generates their personalized dashboard. Call when you have at minimum: experience, primaryGoal, and teamSize.',
+      parameters: {
+        type: 'object',
+        properties: {
+          profile: {
+            type: 'object',
+            description: 'Complete AgentProfile',
+            properties: {
+              name:                     { type: 'string' },
+              experience:               { type: 'string', enum: ['new-agent', 'growing', 'established', 'top-producer', 'team-lead'] },
+              specialties:              { type: 'array', items: { type: 'string' } },
+              markets:                  { type: 'array', items: { type: 'string' } },
+              monthlyLeads:             { type: 'number' },
+              teamSize:                 { type: 'string', enum: ['solo', 'small-team', 'large-team', 'brokerage'] },
+              primaryGoal:              { type: 'string', enum: ['close-more-deals', 'grow-team', 'better-marketing', 'save-time', 'scale-business', 'manage-leads'] },
+              wantsMarketingAutomation: { type: 'boolean' },
+              wantsLeadScoring:         { type: 'boolean' },
+              wantsAIInsights:          { type: 'boolean' },
+              wantsTransactionTracking: { type: 'boolean' },
+              wantsShowingScheduler:    { type: 'boolean' },
+              usesExistingCRM:          { type: 'boolean' },
+            },
+            required: ['experience', 'teamSize', 'primaryGoal', 'specialties', 'markets', 'monthlyLeads',
+                       'wantsMarketingAutomation', 'wantsLeadScoring', 'wantsAIInsights',
+                       'wantsTransactionTracking', 'wantsShowingScheduler', 'usesExistingCRM'],
+          },
+        },
+        required: ['profile'],
+      },
     },
   },
 ];

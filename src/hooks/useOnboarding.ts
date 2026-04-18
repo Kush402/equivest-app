@@ -62,7 +62,7 @@ export function useOnboarding() {
     const controller = new AbortController();
     abortRef.current = controller;
 
-    // Build Anthropic-format history for the API
+    // Build message history for the API
     const apiMessages = [...state.messages, userMsg].map(m => ({
       role: m.role,
       content: m.content,

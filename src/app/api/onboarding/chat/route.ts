@@ -1,12 +1,16 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { NextRequest } from 'next/server';
 import { SYSTEM_PROMPT, TOOLS, applyPreference, coerceProfile } from '@/lib/onboarding/agent';
 import { generateDashboardConfig } from '@/lib/onboarding/personalize';
 import { AgentProfile } from '@/lib/onboarding/schema';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 export const runtime = 'nodejs';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const client = new OpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: 'https://api.deepseek.com',
+});
 
 type SSEPayload = { type: string } & Record<string, unknown>;
 
@@ -16,7 +20,7 @@ function sse(payload: SSEPayload): string {
 
 export async function POST(req: NextRequest) {
   const body = await req.json() as {
-    messages: Anthropic.MessageParam[];
+    messages: ChatCompletionMessageParam[];
     profile?: Partial<AgentProfile>;
   };
 
@@ -29,57 +33,74 @@ export async function POST(req: NextRequest) {
         controller.enqueue(encoder.encode(sse(payload)));
 
       try {
-        let currentMessages: Anthropic.MessageParam[] = [...body.messages];
+        let currentMessages: ChatCompletionMessageParam[] = [...body.messages];
 
-        // Agentic loop — runs until Claude stops calling tools (max 10 turns)
+        // Agentic loop — runs until DeepSeek stops calling tools (max 10 turns)
         for (let turn = 0; turn < 10; turn++) {
-          const toolUseBlocks: Anthropic.ToolUseBlock[] = [];
+          const toolCallAccumulator: Record<number, { id: string; name: string; arguments: string }> = {};
+          let assistantText = '';
 
-          const anthropicStream = client.messages.stream({
-            model: 'claude-sonnet-4-6',
+          const streamResponse = await client.chat.completions.create({
+            model: 'deepseek-chat',
             max_tokens: 1024,
-            system: SYSTEM_PROMPT,
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              ...currentMessages,
+            ],
             tools: TOOLS,
-            messages: currentMessages,
+            stream: true,
           });
 
-          // Stream text tokens to client in real time
-          anthropicStream.on('text', (text) => {
-            send({ type: 'text', delta: text });
-          });
+          for await (const chunk of streamResponse) {
+            const delta = chunk.choices[0]?.delta;
 
-          // Notify client when a tool call starts
-          anthropicStream.on('contentBlock', (block) => {
-            if (block.type === 'tool_use') {
-              send({ type: 'tool_start', name: block.name });
+            if (delta?.content) {
+              assistantText += delta.content;
+              send({ type: 'text', delta: delta.content });
             }
-          });
 
-          const finalMessage = await anthropicStream.finalMessage();
-
-          for (const block of finalMessage.content) {
-            if (block.type === 'tool_use') toolUseBlocks.push(block);
+            if (delta?.tool_calls) {
+              for (const tc of delta.tool_calls) {
+                if (!toolCallAccumulator[tc.index]) {
+                  toolCallAccumulator[tc.index] = { id: tc.id ?? '', name: tc.function?.name ?? '', arguments: '' };
+                  if (tc.function?.name) send({ type: 'tool_start', name: tc.function.name });
+                }
+                toolCallAccumulator[tc.index].arguments += tc.function?.arguments ?? '';
+              }
+            }
           }
 
-          // No tool calls — Claude finished the conversation turn
-          if (toolUseBlocks.length === 0) break;
+          const toolCalls = Object.values(toolCallAccumulator);
 
-          const toolResults: Anthropic.ToolResultBlockParam[] = [];
+          // No tool calls — model finished the conversation turn
+          if (toolCalls.length === 0) break;
+
+          const assistantMessage: ChatCompletionMessageParam = {
+            role: 'assistant',
+            content: assistantText || null,
+            tool_calls: toolCalls.map((tc) => ({
+              id: tc.id,
+              type: 'function' as const,
+              function: { name: tc.name, arguments: tc.arguments },
+            })),
+          };
+
+          const toolResults: ChatCompletionMessageParam[] = [];
           let onboardingCompleted = false;
 
-          for (const tool of toolUseBlocks) {
-            const input = tool.input as Record<string, unknown>;
+          for (const tool of toolCalls) {
+            const input = JSON.parse(tool.arguments) as Record<string, unknown>;
 
             if (tool.name === 'record_preference') {
               const field = input.field as keyof AgentProfile;
               collectedProfile = applyPreference(collectedProfile, field, input.value);
               send({ type: 'preference_recorded', field, value: input.value, profile: collectedProfile });
-              toolResults.push({ type: 'tool_result', tool_use_id: tool.id, content: 'Preference saved.' });
+              toolResults.push({ role: 'tool', tool_call_id: tool.id, content: 'Preference saved.' });
             }
 
             else if (tool.name === 'suggest_features') {
               send({ type: 'feature_suggestion', painPoint: input.painPoint, features: input.features });
-              toolResults.push({ type: 'tool_result', tool_use_id: tool.id, content: 'Feature suggestions sent to client.' });
+              toolResults.push({ role: 'tool', tool_call_id: tool.id, content: 'Feature suggestions sent to client.' });
             }
 
             else if (tool.name === 'complete_onboarding') {
@@ -90,8 +111,8 @@ export async function POST(req: NextRequest) {
               const dashboardConfig = generateDashboardConfig(finalProfile);
               send({ type: 'onboarding_complete', profile: finalProfile, dashboardConfig });
               toolResults.push({
-                type: 'tool_result',
-                tool_use_id: tool.id,
+                role: 'tool',
+                tool_call_id: tool.id,
                 content: 'Dashboard configured. Give a brief, warm summary of what you set up and what they can do first.',
               });
               onboardingCompleted = true;
@@ -100,21 +121,26 @@ export async function POST(req: NextRequest) {
 
           currentMessages = [
             ...currentMessages,
-            { role: 'assistant', content: finalMessage.content },
-            { role: 'user',      content: toolResults },
+            assistantMessage,
+            ...toolResults,
           ];
 
-          // After onboarding completes, allow one final turn for Claude's goodbye, then stop
+          // After onboarding completes, allow one final turn for the goodbye message
           if (onboardingCompleted) {
-            const goodbyeStream = client.messages.stream({
-              model: 'claude-sonnet-4-6',
+            const goodbyeStream = await client.chat.completions.create({
+              model: 'deepseek-chat',
               max_tokens: 400,
-              system: SYSTEM_PROMPT,
+              messages: [
+                { role: 'system', content: SYSTEM_PROMPT },
+                ...currentMessages,
+              ],
               tools: TOOLS,
-              messages: currentMessages,
+              stream: true,
             });
-            goodbyeStream.on('text', (text) => send({ type: 'text', delta: text }));
-            await goodbyeStream.finalMessage();
+            for await (const chunk of goodbyeStream) {
+              const delta = chunk.choices[0]?.delta;
+              if (delta?.content) send({ type: 'text', delta: delta.content });
+            }
             break;
           }
         }
