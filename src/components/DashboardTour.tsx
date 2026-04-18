@@ -186,7 +186,7 @@ export default function DashboardTour({ onDone }: DashboardTourProps) {
               <p className="text-[11px] font-bold text-violet-500 uppercase tracking-wider mb-0.5">
                 Step {stepIdx + 1} of {steps.length}
               </p>
-              <h3 className="text-[17px] font-bold text-gray-900 leading-tight" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h3 className="text-[17px] font-bold text-gray-900 leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>
                 {step.title}
               </h3>
             </div>

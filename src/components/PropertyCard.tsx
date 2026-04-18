@@ -86,7 +86,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           {/* Title + value */}
           <div className="flex items-start justify-between mb-2 gap-2">
             <div>
-              <h3 className="font-bold text-gray-900 text-[15px] leading-tight group-hover:text-violet-700 transition-colors" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h3 className="font-bold text-gray-900 text-[15px] leading-tight group-hover:text-violet-700 transition-colors" style={{ fontFamily: 'Inter, sans-serif' }}>
                 {property.name}
               </h3>
               <p className="text-[10px] text-gray-400 mt-0.5">{property.type}</p>

@@ -104,7 +104,7 @@ export default function Home() {
                 $284M+ in properties funded
               </div>
 
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-[1.05] tracking-tight" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-[1.05] tracking-tight" style={{ fontFamily: 'Inter, sans-serif' }}>
                 Own a piece of{' '}
                 <span className="text-gradient">premium real estate</span>
                 {' '}for $50
@@ -146,7 +146,7 @@ export default function Home() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4">
                     <p className="text-white/70 text-xs mb-1">Featured Property</p>
-                    <p className="text-white font-bold text-lg" style={{ fontFamily: 'Syne, sans-serif' }}>Highland Tower · Boston, MA</p>
+                    <p className="text-white font-bold text-lg" style={{ fontFamily: 'Inter, sans-serif' }}>Highland Tower · Boston, MA</p>
                   </div>
                 </div>
                 {/* Stats overlay */}
@@ -189,7 +189,7 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map(stat => (
               <div key={stat.label} className="text-center">
-                <p className="text-3xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'Syne, sans-serif' }}>{stat.value}</p>
+                <p className="text-3xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'Inter, sans-serif' }}>{stat.value}</p>
                 <p className="text-sm text-gray-500">{stat.label}</p>
               </div>
             ))}
@@ -203,7 +203,7 @@ export default function Home() {
           <div className="flex items-end justify-between mb-10">
             <div>
               <p className="text-violet-600 text-sm font-semibold mb-2 tracking-wide uppercase">Featured</p>
-              <h2 className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'Syne, sans-serif' }}>Currently Funding</h2>
+              <h2 className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>Currently Funding</h2>
               <p className="text-gray-500 mt-2">Vetted deals open for investment right now.</p>
             </div>
             <Button variant="outline" className="hidden sm:flex border-violet-200 text-violet-700 hover:bg-violet-50" asChild>
@@ -230,7 +230,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <p className="text-violet-600 text-sm font-semibold mb-2 tracking-wide uppercase">Simple process</p>
-            <h2 className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'Syne, sans-serif' }}>Start earning in minutes</h2>
+            <h2 className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>Start earning in minutes</h2>
             <p className="text-gray-500 mt-3 max-w-md mx-auto">No complex paperwork. No minimums. Just straightforward real estate investing.</p>
           </div>
 
@@ -247,7 +247,7 @@ export default function Home() {
                   <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-400">
                     {i + 1}
                   </div>
-                  <h3 className="font-bold text-gray-900 mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>{step.title}</h3>
+                  <h3 className="font-bold text-gray-900 mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>{step.title}</h3>
                   <p className="text-sm text-gray-500 leading-relaxed">{step.description}</p>
                 </div>
               </div>
@@ -261,7 +261,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <p className="text-violet-600 text-sm font-semibold mb-2 tracking-wide uppercase">Social proof</p>
-            <h2 className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'Syne, sans-serif' }}>Trusted by 42,000+ investors</h2>
+            <h2 className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>Trusted by 42,000+ investors</h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -310,7 +310,7 @@ export default function Home() {
         <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full opacity-20 blur-3xl" style={{ background: 'radial-gradient(circle, oklch(0.52 0.22 278), transparent)' }} />
 
         <div className="relative max-w-3xl mx-auto text-center px-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6" style={{ fontFamily: 'Syne, sans-serif' }}>
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
             Ready to earn from real estate?
           </h2>
           <p className="text-white/60 text-lg mb-10 max-w-xl mx-auto">
@@ -327,16 +327,11 @@ export default function Home() {
       <footer className="bg-gray-950 text-white/40 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg gradient-brand flex items-center justify-center">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 1L14 5V11L8 15L2 11V5L8 1Z" fill="white" fillOpacity="0.9"/>
-                </svg>
-              </div>
-              <span className="text-white font-bold tracking-tight" style={{ fontFamily: 'Syne, sans-serif' }}>Equivest</span>
+            <div className="flex items-center">
+              <Image src="/lofty/logo-lofty.svg" alt="Lofty" width={84} height={25} />
             </div>
             <p className="text-xs text-center">
-              © 2025 Equivest Inc. · Investment in securities involves risk. · Past performance is not indicative of future results.
+              © 2026 Lofty Inc. · Investment in securities involves risk. · Past performance is not indicative of future results.
             </p>
             <div className="flex gap-6 text-xs">
               {['Privacy', 'Terms', 'Disclosures'].map(link => (

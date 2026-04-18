@@ -71,7 +71,7 @@ export default function MarketplacePage() {
 
         <div className="max-w-7xl mx-auto relative">
           <p className="text-violet-400 text-xs font-bold mb-2 tracking-widest uppercase">Marketplace</p>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
             Browse Investment Properties
           </h1>
           <p className="text-white/40 max-w-xl mb-6 text-sm">
@@ -82,7 +82,7 @@ export default function MarketplacePage() {
           <div className="flex flex-wrap gap-6 mb-6">
             {STATS.map(s => (
               <div key={s.label}>
-                <p className="text-white text-lg font-bold" style={{ fontFamily: 'Syne, sans-serif' }}>{s.value}</p>
+                <p className="text-white text-lg font-bold" style={{ fontFamily: 'Inter, sans-serif' }}>{s.value}</p>
                 <p className="text-white/40 text-[10px] font-medium">{s.label}</p>
               </div>
             ))}

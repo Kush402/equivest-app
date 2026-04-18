@@ -1,75 +1,113 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import Image from 'next/image';
+
+const navItems = [
+  { label: 'People',        href: '/dashboard',   caret: true  },
+  { label: 'Transactions',  href: '/dashboard',   caret: false },
+  { label: 'Calendar',      href: '/dashboard',   caret: true  },
+  { label: 'Listings',      href: '/marketplace', caret: false },
+  { label: 'Marketing',     href: '/dashboard',   caret: false },
+  { label: 'Reporting',     href: '/dashboard',   caret: false },
+  { label: 'Website',       href: '/dashboard',   caret: false },
+  { label: 'Marketplace',   href: '/marketplace', caret: false },
+  { label: 'Settings',      href: '/dashboard',   caret: false },
+];
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [active, setActive] = useState('People');
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center group">
-            <svg xmlns="http://www.w3.org/2000/svg" width="84" height="25" viewBox="0 0 84 25" fill="none">
-              <path fillRule="evenodd" clipRule="evenodd" d="M64.8207 7.80731V4.84387C64.8207 4.70853 64.9327 4.59749 65.0692 4.59749H67.6609C67.7973 4.59749 67.9111 4.70853 67.9111 4.84387V7.80731H71.0838C71.2203 7.80731 71.3323 7.91835 71.3323 8.05368V10.0767C71.3323 10.2121 71.2203 10.3231 71.0838 10.3231H67.9111V14.7422C67.9111 15.1465 67.9163 15.5508 67.9286 15.955C67.9356 16.2049 67.9793 16.4738 68.1123 16.6907C68.3486 17.0793 68.7143 17.2494 69.1623 17.2893C69.7853 17.3448 70.4293 17.2962 71.047 17.206C71.1205 17.1956 71.1888 17.2147 71.2465 17.2633C71.3025 17.3118 71.3323 17.376 71.3323 17.4506V19.6125C71.3323 19.7322 71.2483 19.8328 71.1293 19.8554C70.3663 19.9959 69.5928 20.0636 68.8176 20.0445C68.1053 20.0272 67.3966 19.9022 66.7404 19.6177C66.1086 19.3436 65.6204 18.9081 65.2932 18.306C65.0167 17.7959 64.8592 17.2459 64.8417 16.6647C64.8259 16.0748 64.8207 15.4831 64.8207 14.8915V10.3248C63.139 10.3248 61.6638 10.3248 59.9541 10.3248V19.6142C59.9541 19.7496 59.8421 19.8623 59.7056 19.8623H57.1034C56.9669 19.8623 56.8549 19.7513 56.8549 19.6142V10.3248H55.2257C55.0892 10.3248 54.9772 10.2138 54.9772 10.0785V8.05368C54.9772 7.91835 55.0892 7.80731 55.2257 7.80731H56.8549C56.8566 7.50021 56.8689 7.19311 56.8881 6.88774C56.9109 6.51297 56.9774 6.14341 57.0806 5.78252C57.1944 5.3852 57.4061 5.03646 57.6861 4.73109C58.0134 4.37541 58.4018 4.07525 58.8603 3.90868C59.2506 3.76815 59.6548 3.67792 60.0713 3.65884C60.402 3.64322 60.7345 3.63281 61.0653 3.63281H62.523C62.6595 3.63281 62.7715 3.74385 62.7715 3.87919V5.97685C62.7715 6.11218 62.6595 6.22322 62.523 6.22322H61.1738C60.8535 6.22322 60.4825 6.27701 60.248 6.51644C60.0328 6.73506 59.9558 7.0144 59.9558 7.31456V7.80557C61.6655 7.80731 63.1407 7.80731 64.8207 7.80731ZM34.2945 16.9475H40.9111C41.0476 16.9475 41.1596 17.0585 41.1596 17.1939V19.6125C41.1596 19.7478 41.0476 19.8606 40.9111 19.8606H31.4438C31.3073 19.8606 31.1953 19.7496 31.1953 19.6125V4.2019C31.1953 4.06657 31.3073 3.95553 31.4438 3.95553H34.046C34.1825 3.95553 34.2945 4.06657 34.2945 4.2019V16.9475ZM47.8951 20.1816C46.7699 20.1816 45.6814 19.9456 44.712 19.3644C43.7915 18.8144 43.0915 18.0544 42.5963 17.1071C42.0643 16.0886 41.849 14.973 41.849 13.8331C41.849 12.6828 42.0643 11.5498 42.612 10.5278C43.1142 9.58919 43.823 8.83445 44.7452 8.29138C45.7077 7.72403 46.7804 7.48633 47.8951 7.48633C49.0238 7.48633 50.1158 7.72056 51.0905 8.30353C52.011 8.85353 52.7145 9.61001 53.2115 10.5556C53.747 11.5741 53.964 12.6932 53.964 13.8348C53.964 14.9799 53.7487 16.1008 53.208 17.121C52.7092 18.0631 52.0005 18.8213 51.0783 19.3696C50.1071 19.9456 49.0203 20.1816 47.8951 20.1816ZM76.4579 19.5379L71.7802 8.14738C71.7487 8.0693 71.7557 7.98602 71.8047 7.91662C71.852 7.84548 71.9255 7.80731 72.0112 7.80731H74.7219C74.8269 7.80731 74.9162 7.86803 74.9547 7.9652L77.9751 15.6393L80.9132 7.96693C80.95 7.86977 81.041 7.80731 81.146 7.80731H83.7482C83.8322 7.80731 83.9057 7.84548 83.9547 7.91488C84.0019 7.98428 84.0124 8.06583 83.9809 8.14391L77.4816 24.8419C77.4431 24.9391 77.3538 24.9998 77.2488 24.9998H74.8094C74.7254 24.9998 74.6537 24.9633 74.6047 24.8939C74.5557 24.8263 74.5452 24.7465 74.5749 24.6684L76.4579 19.5379ZM47.8951 17.2685C48.7351 17.2685 49.4963 17.0342 50.0038 16.3419C50.5393 15.615 50.7108 14.718 50.7108 13.8331C50.7108 12.9482 50.5463 12.02 49.9951 11.2999C49.4788 10.6267 48.7246 10.3995 47.8934 10.3995C47.3404 10.3995 46.7769 10.5001 46.3149 10.8193C45.8862 11.1143 45.5922 11.5185 45.4049 12.0009C45.1792 12.5804 45.0987 13.2154 45.0987 13.8348C45.0987 14.7214 45.2667 15.6445 45.8214 16.3645C46.3359 17.0308 47.0709 17.2685 47.8951 17.2685Z" fill="#1D4ED8"/>
-              <path fillRule="evenodd" clipRule="evenodd" d="M9.00519 14.8668C10.6216 13.4422 12.2397 12.0176 13.856 10.593C14.2307 10.2635 14.8427 10.2635 15.2174 10.593C17.933 12.9822 20.9424 15.6306 23.658 18.0199C24.2296 18.5245 23.9922 19.0119 23.6175 19.3432C21.9906 20.7764 20.274 22.2886 18.6453 23.7217C18.2531 24.0667 17.6586 24.1079 17.2506 23.7492C14.8902 21.6706 12.5299 19.5921 10.1713 17.5118C9.75973 17.1479 9.12303 17.1582 8.75016 17.4878C6.38102 19.5749 4.01188 21.6603 1.6445 23.7475C1.03595 24.2847 0 23.9054 0 23.1502C0 17.5993 0 12.0502 0 6.49939C0 6.26596 0.0949767 6.06514 0.281412 5.90037C2.42015 4.01748 4.55888 2.13287 6.69761 0.249982C7.30441 -0.283818 8.34036 0.0937898 8.34036 0.849006C8.34036 5.43866 8.34036 10.0283 8.34036 14.618C8.3386 14.9441 8.77479 15.0694 9.00519 14.8668Z" fill="#1D4ED8"/>
-            </svg>
-          </Link>
+    <nav
+      className="fixed top-0 left-0 right-0 z-50 flex items-center gap-6 px-5"
+      style={{
+        height: 'var(--lofty-nav-h)',
+        background: 'var(--lofty-bg-surface)',
+        borderBottom: '1px solid var(--lofty-border)',
+      }}
+    >
+      {/* Brand */}
+      <Link href="/" className="flex items-center gap-1.5 flex-shrink-0">
+        <Image src="/lofty/logo-lofty.svg" alt="Lofty" width={84} height={25} priority />
+      </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/marketplace" className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium">
-              Marketplace
+      {/* Desktop Nav */}
+      <div className="hidden md:flex items-center gap-5 flex-1">
+        {navItems.map((i) => {
+          const isActive = active === i.label;
+          return (
+            <Link
+              key={i.label}
+              href={i.href}
+              onClick={() => setActive(i.label)}
+              className="relative py-[20px] text-[13px] transition-colors"
+              style={{
+                color: isActive ? 'var(--lofty-fg-1)' : 'var(--lofty-fg-2)',
+                fontWeight: isActive ? 600 : 500,
+                boxShadow: isActive ? 'inset 0 -2px 0 0 var(--lofty-brand-500)' : 'none',
+              }}
+            >
+              {i.label}
+              {i.caret && <span className="ml-1 opacity-60 text-[9px]">▾</span>}
             </Link>
-            <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium">
-              Dashboard
-            </Link>
-            <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium">
-              How it works
-            </a>
-          </div>
-
-          {/* CTA */}
-          <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900" asChild>
-              <Link href="/dashboard">Sign In</Link>
-            </Button>
-            <Button size="sm" className="gradient-brand text-white border-0 shadow-sm hover:scale-[1.02] transition-all" asChild>
-              <Link href="/marketplace">Get Started</Link>
-            </Button>
-          </div>
-
-          {/* Mobile hamburger */}
-          <button className="md:hidden text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setMobileOpen(!mobileOpen)} id="mobile-menu-btn">
-            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2">
-              {mobileOpen ? (
-                <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round"/>
-              ) : (
-                <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round"/>
-              )}
-            </svg>
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileOpen && (
-          <div className="md:hidden pb-4 space-y-2 border-t border-gray-100 pt-2">
-            <Link href="/marketplace" className="block px-3 py-2 text-gray-600 hover:text-gray-900 text-sm transition-colors">Marketplace</Link>
-            <Link href="/dashboard" className="block px-3 py-2 text-gray-600 hover:text-gray-900 text-sm transition-colors">Dashboard</Link>
-            <a href="#how-it-works" className="block px-3 py-2 text-gray-600 hover:text-gray-900 text-sm transition-colors">How it works</a>
-            <div className="pt-2 border-t border-gray-100 flex gap-3">
-              <Button variant="ghost" size="sm" className="text-gray-600 flex-1" asChild>
-                <Link href="/dashboard">Sign In</Link>
-              </Button>
-              <Button size="sm" className="gradient-brand text-white border-0 flex-1" asChild>
-                <Link href="/marketplace">Get Started</Link>
-              </Button>
-            </div>
-          </div>
-        )}
+          );
+        })}
       </div>
+
+      {/* Right side */}
+      <div className="hidden md:flex items-center gap-3.5 flex-shrink-0">
+        <button
+          aria-label="Search"
+          className="p-1.5 rounded-md hover:bg-[var(--lofty-bg-muted)] transition-colors"
+          style={{ color: 'var(--lofty-fg-3)' }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+        </button>
+        <Link
+          href="/dashboard"
+          className="w-7 h-7 rounded-full flex-shrink-0 bg-gradient-to-br from-[#3C5BFF] to-[#16B47C] block"
+          aria-label="Profile"
+        />
+      </div>
+
+      {/* Mobile hamburger */}
+      <button
+        className="md:hidden ml-auto"
+        onClick={() => setMobileOpen(!mobileOpen)}
+        id="mobile-menu-btn"
+        style={{ color: 'var(--lofty-fg-2)' }}
+      >
+        <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
+          {mobileOpen
+            ? <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round"/>
+            : <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round"/>}
+        </svg>
+      </button>
+
+      {/* Mobile Menu */}
+      {mobileOpen && (
+        <div
+          className="md:hidden absolute top-full left-0 right-0 py-2 space-y-1"
+          style={{ background: 'var(--lofty-bg-surface)', borderBottom: '1px solid var(--lofty-border)' }}
+        >
+          {navItems.map((i) => (
+            <Link
+              key={i.label}
+              href={i.href}
+              onClick={() => { setActive(i.label); setMobileOpen(false); }}
+              className="block px-5 py-2 text-sm"
+              style={{ color: 'var(--lofty-fg-2)' }}
+            >
+              {i.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </nav>
   );
 }

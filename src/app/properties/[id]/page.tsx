@@ -77,7 +77,7 @@ export default async function PropertyDetailPage({ params }: Props) {
                   {riskProfile.level} Risk
                 </span>
               </div>
-              <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>
                 {property.name}
               </h1>
               <p className="text-white/60 mt-1.5 flex items-center gap-1 text-sm">
@@ -107,7 +107,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {metrics.map(m => (
                 <div key={m.label} className={`${m.bg} rounded-2xl p-4 text-center`}>
-                  <p className={`text-2xl font-bold ${m.color}`} style={{ fontFamily: 'Syne, sans-serif' }}>{m.value}</p>
+                  <p className={`text-2xl font-bold ${m.color}`} style={{ fontFamily: 'Inter, sans-serif' }}>{m.value}</p>
                   <p className="text-[10px] text-gray-500 mt-1 font-medium">{m.label}</p>
                 </div>
               ))}
@@ -121,7 +121,7 @@ export default async function PropertyDetailPage({ params }: Props) {
                     <p className="font-bold text-gray-900 text-sm">Funding Progress</p>
                     <p className="text-xs text-gray-400">{property.investors.toLocaleString()} investors committed</p>
                   </div>
-                  <p className="text-3xl font-bold text-violet-600" style={{ fontFamily: 'Syne, sans-serif' }}>{property.funded}%</p>
+                  <p className="text-3xl font-bold text-violet-600" style={{ fontFamily: 'Inter, sans-serif' }}>{property.funded}%</p>
                 </div>
                 <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                   <div
@@ -160,7 +160,7 @@ export default async function PropertyDetailPage({ params }: Props) {
 
                 {/* Overview */}
                 <TabsContent value="overview" className="p-6">
-                  <h2 className="font-bold text-gray-900 mb-3" style={{ fontFamily: 'Syne, sans-serif' }}>About this property</h2>
+                  <h2 className="font-bold text-gray-900 mb-3" style={{ fontFamily: 'Inter, sans-serif' }}>About this property</h2>
                   <p className="text-gray-600 text-sm leading-relaxed mb-5">{property.description}</p>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -209,7 +209,7 @@ export default async function PropertyDetailPage({ params }: Props) {
 
                 {/* Financials — full breakdown */}
                 <TabsContent value="financials" className="p-6">
-                  <h2 className="font-bold text-gray-900 mb-4" style={{ fontFamily: 'Syne, sans-serif' }}>Financial Breakdown</h2>
+                  <h2 className="font-bold text-gray-900 mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>Financial Breakdown</h2>
 
                   {/* Annual P&L */}
                   <div className="space-y-1 mb-6">
@@ -275,7 +275,7 @@ export default async function PropertyDetailPage({ params }: Props) {
 
                 {/* Highlights */}
                 <TabsContent value="highlights" className="p-6">
-                  <h2 className="font-bold text-gray-900 mb-4" style={{ fontFamily: 'Syne, sans-serif' }}>Property Highlights</h2>
+                  <h2 className="font-bold text-gray-900 mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>Property Highlights</h2>
                   <ul className="space-y-3">
                     {property.highlights.map(h => (
                       <li key={h} className="flex items-start gap-3">

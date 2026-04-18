@@ -82,7 +82,7 @@ export default function InvestmentPanel({ property }: { property: Property }) {
         <div className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-10 blur-2xl" style={{ background: 'white', transform: 'translate(30%, -30%)' }} />
         <div className="relative">
           <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wider mb-1">Token Price</p>
-          <p className="text-white text-4xl font-bold leading-none" style={{ fontFamily: 'Syne, sans-serif' }}>
+          <p className="text-white text-4xl font-bold leading-none" style={{ fontFamily: 'Inter, sans-serif' }}>
             {formatCurrency(property.tokenPrice)}
             <span className="text-white/50 text-base font-normal ml-1">/ token</span>
           </p>
@@ -250,7 +250,7 @@ export default function InvestmentPanel({ property }: { property: Property }) {
               </svg>
             </div>
             <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-1">Investment Confirmed</p>
-            <h3 className="font-bold text-gray-900 text-xl mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <h3 className="font-bold text-gray-900 text-xl mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
               You&apos;re now an owner
             </h3>
             <p className="text-sm text-gray-500 mb-5 leading-relaxed">
