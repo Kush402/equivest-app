@@ -223,16 +223,6 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
         setCompletingProgress(p => {
           if (p >= 100) {
             clearInterval(interval);
-            const finalProfile: OnboardingProfile = {
-              name: profile.name || 'Alex',
-              experience: profile.experience || 'growing',
-              specialties: ['residential'],
-              primaryGoal: profile.primaryGoal || 'close-more-deals',
-              teamSize: profile.teamSize || 'solo',
-              ...features,
-            };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ complete: true, profile: finalProfile }));
-            onComplete(finalProfile);
             return 100;
           }
           return p + 4;
@@ -240,6 +230,22 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
       }, 60);
     });
   };
+
+  useEffect(() => {
+    if (completingProgress >= 100 && step === 'completing') {
+      const finalProfile: OnboardingProfile = {
+        name: profile.name || 'Alex',
+        experience: profile.experience || 'growing',
+        specialties: ['residential'],
+        primaryGoal: profile.primaryGoal || 'close-more-deals',
+        teamSize: profile.teamSize || 'solo',
+        ...features,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ complete: true, profile: finalProfile }));
+      onComplete(finalProfile);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completingProgress, step]);
 
   const STEP_ORDER: Step[] = ['welcome', 'name', 'experience', 'goal', 'team', 'features'];
   const stepIndex = STEP_ORDER.indexOf(step);
@@ -426,17 +432,26 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   );
 }
 
+export type { OnboardingProfile };
+
 export function useOnboardingComplete() {
   const [isComplete, setIsComplete] = useState<boolean | null>(null);
+  const [profile, setProfile] = useState<OnboardingProfile | null>(null);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      setIsComplete(raw ? JSON.parse(raw).complete === true : false);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setIsComplete(parsed.complete === true);
+        setProfile(parsed.profile ?? null);
+      } else {
+        setIsComplete(false);
+      }
     } catch {
       setIsComplete(false);
     }
   }, []);
 
-  return { isComplete, setIsComplete };
+  return { isComplete, setIsComplete, profile, setProfile };
 }

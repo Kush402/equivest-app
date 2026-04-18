@@ -1,13 +1,65 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/properties';
 import { generatePortfolioHistory } from '@/lib/mockChartData';
 import { EarningsChartClient as EarningsChart, AllocationChartClient as AllocationChart } from '@/components/charts/DashboardChartClients';
-import { OnboardingModal, useOnboardingComplete } from '@/components/OnboardingModal';
+import { OnboardingModal, useOnboardingComplete, type OnboardingProfile } from '@/components/OnboardingModal';
+
+const WIDGETS_KEY = 'equivest_widgets_v1';
+
+type WidgetId =
+  | 'new-updates'
+  | 'today-new-investments'
+  | 'todays-opportunities'
+  | 'need-keep-in-touch'
+  | 'transactions'
+  | 'todays-tasks'
+  | 'appointments'
+  | 'my-listings'
+  | 'hot-sheets';
+
+const WIDGET_META: Record<WidgetId, { title: string; description: string }> = {
+  'new-updates':            { title: 'New Updates',             description: 'Platform news, announcements, and sponsored listings' },
+  'today-new-investments':  { title: "Today's New Investments", description: 'Your holdings and recent token purchases' },
+  'todays-opportunities':   { title: "Today's Opportunities",   description: 'High-yield and top-gaining properties' },
+  'need-keep-in-touch':     { title: 'Need Keep In Touch',      description: 'Upcoming distributions and follow-up reminders' },
+  'transactions':           { title: 'Transactions',            description: 'Recent purchases and rental income activity' },
+  'todays-tasks':           { title: "Today's Tasks",           description: 'Quick actions: invest, withdraw, browse, refer' },
+  'appointments':           { title: 'Appointments',            description: 'Scheduled distribution events and milestones' },
+  'my-listings':            { title: 'My Holdings',             description: 'All your tokenized property investments' },
+  'hot-sheets':             { title: 'Hot Sheets',              description: 'Market-wide: new listings, price reductions, high yields' },
+};
+
+const ALWAYS_ON: WidgetId[] = ['new-updates', 'transactions', 'my-listings', 'todays-tasks'];
+
+function deriveDefaultWidgets(profile: OnboardingProfile | null): WidgetId[] {
+  const ids = new Set<WidgetId>(ALWAYS_ON);
+  if (!profile) return [...ids];
+
+  ids.add('today-new-investments');
+
+  if (['close-more-deals', 'manage-leads'].includes(profile.primaryGoal)) {
+    ids.add('todays-opportunities');
+    ids.add('hot-sheets');
+  }
+  if (['grow-team', 'scale-business', 'better-marketing'].includes(profile.primaryGoal)) {
+    ids.add('todays-opportunities');
+    ids.add('hot-sheets');
+    ids.add('need-keep-in-touch');
+  }
+  if (profile.wantsShowingScheduler) ids.add('appointments');
+  if (profile.wantsAIInsights) {
+    ids.add('todays-opportunities');
+    ids.add('need-keep-in-touch');
+  }
+  if (profile.wantsLeadScoring) ids.add('todays-opportunities');
+
+  return [...ids];
+}
 
 const holdings = [
   {
@@ -147,8 +199,47 @@ export default function DashboardPage() {
   const [withdrawStep, setWithdrawStep] = useState<WithdrawStep>('idle');
   const [withdrawAmount, setWithdrawAmount] = useState(totalMonthly.toFixed(2));
   const portfolioHistory = generatePortfolioHistory(12);
-  const { isComplete, setIsComplete } = useOnboardingComplete();
+  const { isComplete, setIsComplete, profile, setProfile } = useOnboardingComplete();
   const [agentName, setAgentName] = useState('Alex');
+  const [visibleWidgets, setVisibleWidgets] = useState<Set<WidgetId>>(new Set(ALWAYS_ON));
+  const [showWidgetPanel, setShowWidgetPanel] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(WIDGETS_KEY);
+      if (raw) {
+        setVisibleWidgets(new Set(JSON.parse(raw) as WidgetId[]));
+      } else if (profile) {
+        const defaults = deriveDefaultWidgets(profile);
+        setVisibleWidgets(new Set(defaults));
+        localStorage.setItem(WIDGETS_KEY, JSON.stringify(defaults));
+      }
+    } catch { /* ignore */ }
+  }, [profile]);
+
+  useEffect(() => {
+    if (profile?.name) setAgentName(profile.name);
+  }, [profile]);
+
+  function toggleWidget(id: WidgetId) {
+    setVisibleWidgets(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem(WIDGETS_KEY, JSON.stringify([...next]));
+      return next;
+    });
+  }
+
+  function removeWidget(id: WidgetId) {
+    setVisibleWidgets(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      localStorage.setItem(WIDGETS_KEY, JSON.stringify([...next]));
+      return next;
+    });
+  }
+
+  const show = (id: WidgetId) => visibleWidgets.has(id);
 
   const hasHoldings = holdings.length > 0;
 
@@ -158,8 +249,12 @@ export default function DashboardPage() {
       {/* ─── AI Onboarding Modal ─── */}
       {isComplete === false && (
         <OnboardingModal
-          onComplete={(profile) => {
-            setAgentName(profile.name || 'Alex');
+          onComplete={(p) => {
+            setAgentName(p.name || 'Alex');
+            setProfile(p);
+            const defaults = deriveDefaultWidgets(p);
+            setVisibleWidgets(new Set(defaults));
+            localStorage.setItem(WIDGETS_KEY, JSON.stringify(defaults));
             setIsComplete(true);
           }}
         />
@@ -183,7 +278,7 @@ export default function DashboardPage() {
           </button>
           {isComplete && (
             <button
-              onClick={() => { localStorage.removeItem('lofty_onboarding_v2'); setIsComplete(false); setAgentName('Alex'); }}
+              onClick={() => { localStorage.removeItem('lofty_onboarding_v2'); localStorage.removeItem(WIDGETS_KEY); setIsComplete(false); setAgentName('Alex'); setProfile(null); setVisibleWidgets(new Set(ALWAYS_ON)); }}
               className="text-[11px] text-gray-300 hover:text-violet-500 transition-colors font-medium border border-gray-200 hover:border-violet-300 rounded-md px-2 py-1"
               title="Re-run AI onboarding"
             >
@@ -290,7 +385,7 @@ export default function DashboardPage() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
         {/* Widget: New Updates / Announcements (tabs) */}
-        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {show('new-updates') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-4">
               <button
@@ -320,6 +415,9 @@ export default function DashboardPage() {
                   <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M15 3h6v6M10 14L21 3" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
+              </button>
+              <button onClick={() => removeWidget('new-updates')} className="hover:text-red-400" aria-label="Remove widget">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
               </button>
             </div>
           </div>
@@ -374,13 +472,18 @@ export default function DashboardPage() {
               ))}
             </div>
           )}
-        </section>
+        </section>}
 
-        {/* Widget: Today's New Leads → Today's New Investments */}
-        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {/* Widget: Today's New Investments */}
+        {show('today-new-investments') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-[15px] font-semibold text-gray-900">Today&apos;s New Investments</h2>
-            <CardToolIcons showGear />
+            <div className="flex items-center gap-1.5 text-gray-300">
+              <CardToolIcons showGear />
+              <button onClick={() => removeWidget('today-new-investments')} className="hover:text-red-400" aria-label="Remove widget">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
+              </button>
+            </div>
           </div>
           <div className="h-1 bg-gray-100 rounded-full overflow-hidden mb-3">
             <div className="h-full gradient-brand rounded-full" style={{ width: hasHoldings ? '62%' : '0%' }} />
@@ -409,13 +512,18 @@ export default function DashboardPage() {
           ) : (
             <EmptyIllustration />
           )}
-        </section>
+        </section>}
 
         {/* Widget: Today's Opportunities */}
-        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {show('todays-opportunities') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-semibold text-gray-900">Today&apos;s Opportunities</h2>
-            <CardToolIcons />
+            <div className="flex items-center gap-1.5 text-gray-300">
+              <CardToolIcons />
+              <button onClick={() => removeWidget('todays-opportunities')} className="hover:text-red-400" aria-label="Remove widget">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-2 bg-[#f5f6f8] rounded-lg p-3 mb-4">
             {[
@@ -445,13 +553,18 @@ export default function DashboardPage() {
           ) : (
             <EmptyIllustration />
           )}
-        </section>
+        </section>}
 
-        {/* Widget: Need Keep In Touch → Upcoming Distributions */}
-        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {/* Widget: Need Keep In Touch */}
+        {show('need-keep-in-touch') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-semibold text-gray-900">Need Keep In Touch</h2>
-            <CardToolIcons showGear />
+            <div className="flex items-center gap-1.5 text-gray-300">
+              <CardToolIcons showGear />
+              <button onClick={() => removeWidget('need-keep-in-touch')} className="hover:text-red-400" aria-label="Remove widget">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2 bg-[#f5f6f8] rounded-lg p-3 mb-4">
             <div className="text-center">
@@ -473,13 +586,18 @@ export default function DashboardPage() {
             ))}
           </div>
           <Link href="#" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View All &gt;</Link>
-        </section>
+        </section>}
 
         {/* Widget: Transactions */}
-        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {show('transactions') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-semibold text-gray-900">Transactions</h2>
-            <CardToolIcons showGear />
+            <div className="flex items-center gap-1.5 text-gray-300">
+              <CardToolIcons showGear />
+              <button onClick={() => removeWidget('transactions')} className="hover:text-red-400" aria-label="Remove widget">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2 bg-[#f5f6f8] rounded-lg p-3 mb-4">
             <div className="text-center">
@@ -503,13 +621,18 @@ export default function DashboardPage() {
             ))}
           </div>
           <Link href="#" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View All &gt;</Link>
-        </section>
+        </section>}
 
-        {/* Widget: Today's Tasks → Quick Actions */}
-        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {/* Widget: Today's Tasks */}
+        {show('todays-tasks') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-semibold text-gray-900">Today&apos;s Tasks</h2>
-            <CardToolIcons />
+            <div className="flex items-center gap-1.5 text-gray-300">
+              <CardToolIcons />
+              <button onClick={() => removeWidget('todays-tasks')} className="hover:text-red-400" aria-label="Remove widget">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-4 gap-2 mb-4">
             {[
@@ -542,10 +665,10 @@ export default function DashboardPage() {
               </svg>
             </button>
           </div>
-        </section>
+        </section>}
 
-        {/* Widget: Appointments / Showings → Events tabs */}
-        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {/* Widget: Appointments / Showings */}
+        {show('appointments') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-4">
               <button
@@ -563,7 +686,12 @@ export default function DashboardPage() {
                 {eventsTab === 'showings' && <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-violet-600 rounded-full" />}
               </button>
             </div>
-            <CardToolIcons />
+            <div className="flex items-center gap-1.5 text-gray-300">
+              <CardToolIcons />
+              <button onClick={() => removeWidget('appointments')} className="hover:text-red-400" aria-label="Remove widget">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
+              </button>
+            </div>
           </div>
           <div className="h-1 bg-gray-100 rounded-full overflow-hidden mb-3">
             <div className="h-full bg-violet-500 rounded-full" style={{ width: '20%' }} />
@@ -581,13 +709,18 @@ export default function DashboardPage() {
           ) : (
             <EmptyIllustration />
           )}
-        </section>
+        </section>}
 
-        {/* Widget: My Listings → My Holdings */}
-        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {/* Widget: My Holdings */}
+        {show('my-listings') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[15px] font-semibold text-gray-900">My Listings</h2>
-            <CardToolIcons />
+            <h2 className="text-[15px] font-semibold text-gray-900">My Holdings</h2>
+            <div className="flex items-center gap-1.5 text-gray-300">
+              <CardToolIcons />
+              <button onClick={() => removeWidget('my-listings')} className="hover:text-red-400" aria-label="Remove widget">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
+              </button>
+            </div>
           </div>
           <div className="space-y-3">
             {holdings.map(h => (
@@ -604,12 +737,15 @@ export default function DashboardPage() {
             ))}
           </div>
           <Link href="/marketplace" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View All &gt;</Link>
-        </section>
+        </section>}
 
         {/* Widget: Hot Sheets */}
-        <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {show('hot-sheets') && <section className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-semibold text-gray-900">Hot Sheets</h2>
+            <button onClick={() => removeWidget('hot-sheets')} className="text-gray-300 hover:text-red-400" aria-label="Remove widget">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
+            </button>
           </div>
           <div className="divide-y divide-gray-50">
             {hotSheets.map(s => (
@@ -624,9 +760,72 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-        </section>
+        </section>}
+
+        {/* Widget: Add Card */}
+        <button
+          onClick={() => setShowWidgetPanel(true)}
+          className="border-2 border-dashed border-gray-200 rounded-xl min-h-[120px] flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-violet-400 hover:text-violet-500 transition-colors group"
+        >
+          <div className="w-10 h-10 rounded-full border-2 border-dashed border-current flex items-center justify-center group-hover:border-violet-400">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <span className="text-sm font-semibold">Add Widget</span>
+        </button>
 
       </div>
+
+      {/* ─── Widget Panel Modal ─── */}
+      {showWidgetPanel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/40 backdrop-blur-sm" onClick={() => setShowWidgetPanel(false)}>
+          <div className="bg-white h-full w-full max-w-sm shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+              <div>
+                <h2 className="text-[17px] font-bold text-gray-900" style={{ fontFamily: 'Syne, sans-serif' }}>Customize Dashboard</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Toggle widgets on or off</p>
+              </div>
+              <button onClick={() => setShowWidgetPanel(false)} className="text-gray-400 hover:text-gray-600">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+              {(Object.entries(WIDGET_META) as [WidgetId, { title: string; description: string }][]).map(([id, meta]) => (
+                <div
+                  key={id}
+                  onClick={() => toggleWidget(id)}
+                  className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                    visibleWidgets.has(id)
+                      ? 'border-violet-300 bg-violet-50'
+                      : 'border-gray-100 bg-gray-50 opacity-60'
+                  }`}
+                >
+                  <div className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                    visibleWidgets.has(id) ? 'border-violet-600 bg-violet-600' : 'border-gray-300 bg-white'
+                  }`}>
+                    {visibleWidgets.has(id) && (
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-semibold text-gray-900">{meta.title}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{meta.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100">
+              <button
+                onClick={() => setShowWidgetPanel(false)}
+                className="w-full py-2.5 rounded-xl gradient-brand text-white text-sm font-semibold shadow-sm shadow-violet-400/30"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── Performance + Allocation Row (Equivest specifics kept) ─── */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 grid lg:grid-cols-3 gap-4">
