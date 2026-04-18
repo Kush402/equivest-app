@@ -9,11 +9,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Equivest — Invest in Real Estate from $50",
-  description: "Equivest lets you invest in institutional-grade real estate for as little as $50. Earn passive rental income and long-term appreciation — fully tokenized, fully transparent.",
+  title: "Lofty — Invest in Real Estate from $50",
+  description: "Lofty lets you invest in institutional-grade real estate for as little as $50. Earn passive rental income and long-term appreciation — fully tokenized, fully transparent.",
   keywords: "real estate investing, fractional real estate, tokenized real estate, passive income, property investment",
   openGraph: {
-    title: "Equivest — Invest in Real Estate from $50",
+    title: "Lofty — Invest in Real Estate from $50",
     description: "Earn passive income from premium real estate with as little as $50.",
     type: "website",
   },
