@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/properties';
 import { generatePortfolioHistory } from '@/lib/mockChartData';
 import { EarningsChartClient as EarningsChart, AllocationChartClient as AllocationChart } from '@/components/charts/DashboardChartClients';
+import { OnboardingModal, useOnboardingComplete } from '@/components/OnboardingModal';
 
 const holdings = [
   {
@@ -146,18 +147,30 @@ export default function DashboardPage() {
   const [withdrawStep, setWithdrawStep] = useState<WithdrawStep>('idle');
   const [withdrawAmount, setWithdrawAmount] = useState(totalMonthly.toFixed(2));
   const portfolioHistory = generatePortfolioHistory(12);
+  const { isComplete, setIsComplete } = useOnboardingComplete();
+  const [agentName, setAgentName] = useState('Alex');
 
   const hasHoldings = holdings.length > 0;
 
   return (
     <main className="min-h-screen bg-[#f5f6f8] pt-16">
 
+      {/* ─── AI Onboarding Modal ─── */}
+      {isComplete === false && (
+        <OnboardingModal
+          onComplete={(profile) => {
+            setAgentName(profile.name || 'Alex');
+            setIsComplete(true);
+          }}
+        />
+      )}
+
       {/* ─── Greeting Row ─── */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-[28px] leading-none font-extrabold text-gray-900 flex items-center gap-2" style={{ fontFamily: 'Syne, sans-serif' }}>
             <span className="text-3xl">👋</span>
-            Good Morning, Alex
+            Good Morning, {agentName}
             <span className="text-2xl">💼</span>
             <span className="text-gray-900">!</span>
           </h1>
@@ -168,6 +181,15 @@ export default function DashboardPage() {
               <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
+          {isComplete && (
+            <button
+              onClick={() => { localStorage.removeItem('lofty_onboarding_v2'); setIsComplete(false); setAgentName('Alex'); }}
+              className="text-[11px] text-gray-300 hover:text-violet-500 transition-colors font-medium border border-gray-200 hover:border-violet-300 rounded-md px-2 py-1"
+              title="Re-run AI onboarding"
+            >
+              ✦ Re-run AI Setup
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
