@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.cursorrules
+.mcp.json
+.gitignore
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+CLAUDE.md
+AGENTS.md
+.claude/skills/debug-issue.md
+.gitignore
+.gitignore
