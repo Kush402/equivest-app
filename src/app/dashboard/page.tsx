@@ -251,6 +251,7 @@ export default function DashboardPage() {
   const [showWidgetPanel, setShowWidgetPanel] = useState(false);
   const [showTour, setShowTour] = useState(false);
   const [tourStartWidget, setTourStartWidget] = useState<WidgetId | undefined>(undefined);
+  const [pendingTourWidget, setPendingTourWidget] = useState<WidgetId | undefined>(undefined);
 
   useEffect(() => {
     try {
@@ -280,6 +281,24 @@ export default function DashboardPage() {
       return next;
     });
     if (isAdding) {
+      // If the Add Widget panel is open, defer the tour until it closes
+      // so the modal doesn't overlap the tour highlight.
+      if (showWidgetPanel) {
+        setPendingTourWidget(id);
+      } else {
+        setTimeout(() => {
+          setTourStartWidget(id);
+          setShowTour(true);
+        }, 400);
+      }
+    }
+  }
+
+  function closeWidgetPanel() {
+    setShowWidgetPanel(false);
+    if (pendingTourWidget) {
+      const id = pendingTourWidget;
+      setPendingTourWidget(undefined);
       setTimeout(() => {
         setTourStartWidget(id);
         setShowTour(true);
@@ -1217,14 +1236,14 @@ export default function DashboardPage() {
 
       {/* ─── Widget Panel Modal ─── */}
       {showWidgetPanel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/40 backdrop-blur-sm" onClick={() => setShowWidgetPanel(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/40 backdrop-blur-sm" onClick={closeWidgetPanel}>
           <div className="bg-white h-full w-full max-w-sm shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <div>
                 <h2 className="text-[17px] font-bold text-gray-900" style={{ fontFamily: 'Syne, sans-serif' }}>Customize Dashboard</h2>
                 <p className="text-xs text-gray-400 mt-0.5">Toggle widgets on or off</p>
               </div>
-              <button onClick={() => setShowWidgetPanel(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={closeWidgetPanel} className="text-gray-400 hover:text-gray-600">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
               </button>
             </div>
@@ -1255,7 +1274,7 @@ export default function DashboardPage() {
             </div>
             <div className="px-6 py-4 border-t border-gray-100">
               <button
-                onClick={() => setShowWidgetPanel(false)}
+                onClick={closeWidgetPanel}
                 className="w-full py-2.5 rounded-xl gradient-brand text-white text-sm font-semibold shadow-sm shadow-violet-400/30"
               >
                 Done
