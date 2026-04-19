@@ -11,8 +11,8 @@ import { OnboardingModal, useOnboardingComplete, type OnboardingProfile } from '
 import DashboardTour from '@/components/DashboardTour';
 import LeadChatWidget from '@/components/LeadChatWidget';
 
-const WIDGETS_KEY  = 'equivest_widgets_v1';
-const TOUR_DONE_KEY = 'equivest_tour_complete_v1';
+const WIDGETS_KEY  = 'lofty_widgets_v1';
+const TOUR_DONE_KEY = 'lofty_tour_complete_v1';
 
 type WidgetId =
   | 'portfolio-stats'
@@ -145,7 +145,7 @@ const announcements = [
 ];
 
 const newUpdates = [
-  { title: 'Equivest Real Estate Service', tag: 'Sponsored',
+  { title: 'Lofty Real Estate Service', tag: 'Sponsored',
     body: '🏡 NEW LISTING — NOW AVAILABLE! Be the first to invest in 1133 W 9th St, Cleveland, OH.' },
 ];
 
@@ -719,7 +719,7 @@ export default function DashboardPage() {
                 <div className="w-12 h-12 rounded-md bg-violet-50 flex items-center justify-center flex-shrink-0">
                   🚀
                 </div>
-                <p className="text-sm text-gray-700 group-hover:text-violet-700">Check Equivest&apos;s latest feature updates!</p>
+                <p className="text-sm text-gray-700 group-hover:text-violet-700">Check Lofty&apos;s latest feature updates!</p>
               </Link>
             </div>
           ) : (

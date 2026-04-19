@@ -136,7 +136,7 @@ export default function AIInsightsPanel({ property }: AIInsightsPanelProps) {
             </div>
           </div>
           <div>
-            <p className="text-xs text-violet-500 font-medium mb-0.5">Equivest Score</p>
+            <p className="text-xs text-violet-500 font-medium mb-0.5">Lofty Score</p>
             <p className="text-xl font-bold text-violet-900" style={{ fontFamily: 'Inter, sans-serif' }}>
               {property.totalReturn >= 14 ? 'Excellent' : property.totalReturn >= 11 ? 'Strong' : 'Good'}
             </p>

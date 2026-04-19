@@ -159,12 +159,12 @@ export default function DashboardTour({ onDone }: DashboardTourProps) {
         aria-hidden="true"
       >
         <defs>
-          <mask id="equivest-tour-mask">
+          <mask id="lofty-tour-mask">
             <rect width="100%" height="100%" fill="white" />
             <rect x={sx} y={sy} width={sw} height={sh} fill="black" rx="14" />
           </mask>
         </defs>
-        <rect width="100%" height="100%" fill="rgba(0,0,0,0.62)" mask="url(#equivest-tour-mask)" />
+        <rect width="100%" height="100%" fill="rgba(0,0,0,0.62)" mask="url(#lofty-tour-mask)" />
         {/* Violet glow ring around target */}
         <rect x={sx - 1} y={sy - 1} width={sw + 2} height={sh + 2}
           fill="none" stroke="rgba(139,92,246,0.75)" strokeWidth="2.5" rx="15" />

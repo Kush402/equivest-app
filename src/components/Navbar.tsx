@@ -1,23 +1,29 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 
 const navItems = [
-  { label: 'People',        href: '/dashboard',   caret: true  },
-  { label: 'Transactions',  href: '/dashboard',   caret: false },
-  { label: 'Calendar',      href: '/dashboard',   caret: true  },
-  { label: 'Listings',      href: '/marketplace', caret: false },
-  { label: 'Marketing',     href: '/dashboard',   caret: false },
-  { label: 'Reporting',     href: '/dashboard',   caret: false },
-  { label: 'Website',       href: '/dashboard',   caret: false },
-  { label: 'Marketplace',   href: '/marketplace', caret: false },
-  { label: 'Settings',      href: '/dashboard',   caret: false },
+  { label: 'People',        href: '/dashboard',            caret: true  },
+  { label: 'Transactions',  href: '/dashboard',            caret: false },
+  { label: 'Calendar',      href: '/dashboard',            caret: true  },
+  { label: 'Listings',      href: '/marketplace',          caret: false },
+  { label: 'Marketing',     href: '/dashboard',            caret: false },
+  { label: 'Reporting',     href: '/dashboard',            caret: false },
+  { label: 'Website',       href: '/dashboard',            caret: false },
+  { label: 'Marketplace',   href: '/marketplace',          caret: false },
+  { label: 'AI Assistant',  href: '/personal-assistant',   caret: false },
+  { label: 'Settings',      href: '/dashboard',            caret: false },
 ];
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [active, setActive] = useState('People');
+  const pathname = usePathname();
+  const [active, setActive] = useState(() => {
+    const match = navItems.find(i => i.href !== '/dashboard' && pathname?.startsWith(i.href));
+    return match?.label ?? 'People';
+  });
 
   return (
     <nav

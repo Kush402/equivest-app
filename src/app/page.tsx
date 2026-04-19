@@ -52,7 +52,7 @@ const steps = [
 
 const testimonials = [
   {
-    quote: "I started with just $200 and now earn over $400/month in passive income. Equivest completely changed how I think about wealth building.",
+    quote: "I started with just $200 and now earn over $400/month in passive income. Lofty completely changed how I think about wealth building.",
     name: "Marcus T.",
     role: "Software Engineer, Seattle",
     avatar: "M",
@@ -68,7 +68,7 @@ const testimonials = [
     label: "Annual return",
   },
   {
-    quote: "As a first-time real estate investor, Equivest made it incredibly approachable. The team vets every deal thoroughly.",
+    quote: "As a first-time real estate investor, Lofty made it incredibly approachable. The team vets every deal thoroughly.",
     name: "Jordan K.",
     role: "Marketing Director, Austin",
     avatar: "J",
@@ -111,7 +111,7 @@ export default function Home() {
               </h1>
 
               <p className="text-lg text-white/60 leading-relaxed max-w-lg">
-                Equivest lets anyone invest in institutional-grade properties — multifamily, commercial, and mixed-use — and earn passive income from day one.
+                Lofty lets anyone invest in institutional-grade properties — multifamily, commercial, and mixed-use — and earn passive income from day one.
               </p>
 
               <div className="flex flex-wrap gap-4">

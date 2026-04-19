@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: `You are an expert guide for Equivest, a tokenized real estate investment platform.
+          content: `You are an expert guide for Lofty, a tokenized real estate investment platform.
 You explain dashboard widgets clearly to investors of all experience levels.
 Keep answers concise (2–4 sentences max), practical, and jargon-free.
 The widget being discussed is: "${widgetTitle}".`,
@@ -53,7 +53,7 @@ The widget being discussed is: "${widgetTitle}".`,
     const reply = completion.choices[0]?.message?.content ?? FALLBACKS[widgetId] ?? 'I can help explain this widget! Try asking a specific question about it.';
     return Response.json({ reply });
   } catch {
-    const fallback = FALLBACKS[widgetId] ?? `The ${widgetTitle} widget helps you track your investment activity on Equivest. Ask a specific question and I'll do my best to help!`;
+    const fallback = FALLBACKS[widgetId] ?? `The ${widgetTitle} widget helps you track your investment activity on Lofty. Ask a specific question and I'll do my best to help!`;
     return Response.json({ reply: fallback });
   }
 }
