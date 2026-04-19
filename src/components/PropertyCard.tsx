@@ -26,37 +26,42 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   const MARKET_AVG = 5.2;
   const yieldAdv = (property.yield - MARKET_AVG).toFixed(1);
 
+  const detailHref = `/properties/${property.id}`;
+  const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${property.name} ${property.city} ${property.state}`)}`;
+
   return (
-    <Link href={`/properties/${property.id}`} className="block group">
+    <div className="group">
       <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-violet-500/10 hover:-translate-y-1 hover:border-violet-100">
 
         {/* ─── Image ─── */}
         <div className="relative h-52 overflow-hidden">
-          <Image
-            src={property.image}
-            alt={property.name}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+          <Link href={detailHref} className="absolute inset-0 z-0 block">
+            <Image
+              src={property.image}
+              alt={property.name}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          </Link>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent pointer-events-none" />
 
           {/* Status */}
-          <div className="absolute top-3 left-3">
+          <div className="absolute top-3 left-3 pointer-events-none">
             <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${STATUS_STYLES[property.status]}`}>
               {property.status}
             </span>
           </div>
 
           {/* Yield badge */}
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 pointer-events-none">
             <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20">
               {property.yield}% yield
             </span>
           </div>
 
           {/* ─── Hover overlay: Quick stats ─── */}
-          <div className="absolute inset-0 bg-violet-900/85 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
+          <div className="absolute inset-0 bg-violet-900/85 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center pointer-events-none">
             <div className="grid grid-cols-2 gap-3 px-6 w-full">
               {[
                 { label: 'Total Return', value: `${property.totalReturn}%` },
@@ -73,16 +78,21 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           </div>
 
           {/* Location */}
-          <div className="absolute bottom-3 left-3 flex items-center gap-1 text-white text-xs font-medium">
+          <a
+            href={mapsHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute bottom-3 left-3 z-10 flex items-center gap-1 text-white text-xs font-medium hover:text-violet-200 hover:underline"
+          >
             <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 16 16">
               <path d="M8 0C5.2 0 3 2.2 3 5c0 4.3 5 11 5 11s5-6.7 5-11c0-2.8-2.2-5-5-5zm0 7.5C6.6 7.5 5.5 6.4 5.5 5S6.6 2.5 8 2.5 10.5 3.6 10.5 5 9.4 7.5 8 7.5z"/>
             </svg>
             {property.city}, {property.state}
-          </div>
+          </a>
         </div>
 
         {/* ─── Body ─── */}
-        <div className="p-4">
+        <Link href={detailHref} className="block p-4">
           {/* Title + value */}
           <div className="flex items-start justify-between mb-2 gap-2">
             <div>
@@ -164,8 +174,8 @@ export default function PropertyCard({ property }: PropertyCardProps) {
               </svg>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }

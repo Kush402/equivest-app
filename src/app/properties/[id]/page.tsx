@@ -86,6 +86,14 @@ export default async function PropertyDetailPage({ params }: Props) {
                 </svg>
                 {property.city}, {property.state}
               </p>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${property.name} ${property.city} ${property.state}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm transition-colors"
+              >
+                📍 View on Map
+              </a>
             </div>
             <div className="hidden md:block text-right flex-shrink-0">
               <p className="text-white/50 text-xs mb-1">Property Value</p>

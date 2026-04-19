@@ -16,6 +16,26 @@ type ChatMessage = {
   time: string;
 };
 
+function renderWithLinks(text: string, isOnViolet: boolean) {
+  const parts = text.split(/(https?:\/\/\S+)/g);
+  return parts.map((part, i) => {
+    if (/^https?:\/\//.test(part)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`underline break-all ${isOnViolet ? 'text-white' : 'text-violet-600 hover:text-violet-700'}`}
+        >
+          {part}
+        </a>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 type TriggerAutoTextDetail = {
   showings: Array<{
     time: string;
@@ -96,14 +116,17 @@ export default function LeadChatWidget() {
       const nowLabel = () =>
         new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
+      const mapsUrl = (query: string) =>
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+
       const scheduleText = showings
         .slice(0, 2)
-        .map(s => `${s.time} - ${s.property}`)
-        .join(', ');
+        .map(s => `${s.time} - ${s.property} (${mapsUrl(`${s.property} ${s.address}`)})`)
+        .join('\n');
 
       const outreach: ChatMessage = {
         from: 'ai',
-        text: `Hey Marcus, I used our AI routing to optimize your showings today! Schedule: ${scheduleText}. See you there!`,
+        text: `Hey Marcus, I used our AI routing to optimize your showings today! Schedule:\n${scheduleText}\nSee you there!`,
         time: nowLabel(),
       };
       setMessages(prev => [...prev, outreach]);
@@ -271,7 +294,7 @@ export default function LeadChatWidget() {
                         ? 'bg-violet-600 text-white rounded-br-sm'
                         : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm'
                     }`}>
-                      <p>{msg.text}</p>
+                      <p className="whitespace-pre-line">{renderWithLinks(msg.text, msg.from === 'lead')}</p>
                       <p className={`text-[10px] mt-1 ${msg.from === 'lead' ? 'text-violet-200' : 'text-gray-400'}`}>{msg.time}</p>
                     </div>
                   </div>

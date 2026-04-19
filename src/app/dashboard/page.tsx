@@ -592,7 +592,17 @@ export default function DashboardPage() {
                       <p className="text-[13px] text-[var(--lofty-fg-1)]" style={{ fontWeight: 500 }}>
                         {s.time} · {s.lead}
                       </p>
-                      <p className="text-[12px] text-[var(--lofty-fg-4)]">{s.property}</p>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${s.property} ${s.address}`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[12px] text-[var(--lofty-fg-4)] hover:text-[var(--lofty-brand-500)] inline-flex items-center gap-1 underline-offset-2 hover:underline"
+                      >
+                        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0">
+                          <path d="M8 0C5.2 0 3 2.2 3 5c0 4.3 5 11 5 11s5-6.7 5-11c0-2.8-2.2-5-5-5zm0 7.5C6.6 7.5 5.5 6.4 5.5 5S6.6 2.5 8 2.5 10.5 3.6 10.5 5 9.4 7.5 8 7.5z"/>
+                        </svg>
+                        {s.property}
+                      </a>
                       <p className="text-[var(--lofty-fg-4)]" style={{ fontSize: '11px' }}>{s.address}</p>
                       <p style={{ fontStyle: 'italic', color: 'var(--lofty-fg-4)', fontSize: '12px', marginTop: '2px' }}>
                         <span style={{ fontStyle: 'normal' }}>AI: </span>{s.reason}
@@ -1096,16 +1106,25 @@ export default function DashboardPage() {
           </div>
           <div className="space-y-3">
             {holdings.map(h => (
-              <Link href={`/properties/${h.id}`} key={h.id} className="flex items-center gap-3 group">
-                <div className="relative w-14 h-14 rounded-md overflow-hidden flex-shrink-0">
+              <div key={h.id} className="flex items-center gap-3 group">
+                <Link href={`/properties/${h.id}`} className="relative w-14 h-14 rounded-md overflow-hidden flex-shrink-0">
                   <Image src={h.image} alt={h.name} fill sizes="56px" className="object-cover group-hover:scale-105 transition-transform" />
-                </div>
+                </Link>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-gray-900 group-hover:text-violet-700 truncate">{h.name}</p>
-                  <p className="text-[11px] text-gray-500 truncate">{h.city}</p>
+                  <Link href={`/properties/${h.id}`} className="block text-[13px] font-semibold text-gray-900 hover:text-violet-700 truncate">
+                    {h.name}
+                  </Link>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(h.city)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-gray-500 hover:text-violet-600 hover:underline truncate inline-block"
+                  >
+                    {h.city}
+                  </a>
                   <p className="text-[11px] text-violet-600 mt-0.5">{h.tokens} tokens · {formatCurrency(h.currentValue)}</p>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
           <Link href="/marketplace" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View All &gt;</Link>
