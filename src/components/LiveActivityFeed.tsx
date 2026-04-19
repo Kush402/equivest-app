@@ -22,12 +22,15 @@ export default function LiveActivityFeed({
   compact = false,
   propertyId,
 }: LiveActivityFeedProps) {
-  const [activities, setActivities] = useState<ActivityEntry[]>(() =>
-    getInitialActivities(maxItems)
-  );
+  const [activities, setActivities] = useState<ActivityEntry[]>([]);
   const [newId, setNewId] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Hydration-safe: populate activities only on the client
+  useEffect(() => {
+    setActivities(getInitialActivities(maxItems));
+  }, [maxItems]);
 
   // Inject new activity periodically
   useEffect(() => {

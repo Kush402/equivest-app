@@ -35,7 +35,7 @@ const WIDGET_META: Record<WidgetId, { title: string; description: string }> = {
   'need-keep-in-touch':     { title: 'Need Keep In Touch',        description: 'Upcoming distributions and follow-up reminders' },
   'transactions':           { title: 'Transactions',              description: 'Recent purchases and rental income activity' },
   'todays-tasks':           { title: "Today's Tasks",             description: 'Quick actions: invest, withdraw, browse, refer' },
-  'appointments':           { title: 'Appointments',              description: 'Scheduled distribution events and milestones' },
+  'appointments':           { title: 'Appointments',              description: 'AI-optimized showing schedules and proactive lead outreach.' },
   'my-listings':            { title: 'My Holdings',               description: 'All your tokenized property investments' },
   'hot-sheets':             { title: 'Hot Sheets',                description: 'Market-wide: new listings, price reductions, high yields' },
   'market-pulse':           { title: 'Market Pulse',              description: 'Live platform metrics: listings, average yield, AUM, trending cities' },
@@ -148,6 +148,36 @@ const newUpdates = [
     body: '🏡 NEW LISTING — NOW AVAILABLE! Be the first to invest in 1133 W 9th St, Cleveland, OH.' },
 ];
 
+const aiClusteredShowings = [
+  {
+    time: '1:00 PM',
+    lead: 'Sarah Jenkins',
+    property: 'Azure Bay Residences',
+    address: '4821 E Camelback Rd, Phoenix AZ 85251',
+    intent: 'Hot',
+    reason: 'Viewed listing 4 times in 24h, requested showing',
+    consent_status: 'opted_in',
+  },
+  {
+    time: '1:45 PM',
+    lead: 'Marcus Chen',
+    property: 'Marina View Lofts',
+    address: '5102 E Camelback Rd, Phoenix AZ 85018',
+    intent: 'Warm',
+    reason: 'Geographic overlap (0.8 mi from previous stop)',
+    consent_status: 'opted_in',
+  },
+  {
+    time: '2:30 PM',
+    lead: 'David & Emma Torres',
+    property: 'Highland Tower',
+    address: '3850 E Camelback Rd, Phoenix AZ 85018',
+    intent: 'Hot',
+    reason: 'Pre-approved buyer, lease ending in 3 weeks',
+    consent_status: 'pending',
+  },
+];
+
 const totalInvested = holdings.reduce((a, h) => a + h.invested, 0);
 const totalValue    = holdings.reduce((a, h) => a + h.currentValue, 0);
 const totalEarned   = holdings.reduce((a, h) => a + h.totalEarned, 0);
@@ -209,6 +239,9 @@ export default function DashboardPage() {
   const [eventsTab,  setEventsTab]  = useState<'appointments' | 'showings'>('appointments');
   const [withdrawStep, setWithdrawStep] = useState<WithdrawStep>('idle');
   const [withdrawAmount, setWithdrawAmount] = useState(totalMonthly.toFixed(2));
+  const [showRouteModal, setShowRouteModal] = useState(false);
+  const [routeGenerating, setRouteGenerating] = useState(false);
+  const [outreachSent, setOutreachSent] = useState(false);
   const portfolioHistory = generatePortfolioHistory(12);
   const { isComplete, setIsComplete, profile, setProfile } = useOnboardingComplete();
   const [agentName, setAgentName] = useState('Alex');
@@ -419,6 +452,157 @@ export default function DashboardPage() {
                 <Button className="w-full gradient-brand text-white border-0" onClick={() => setWithdrawStep('idle')}>Done</Button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── AI Smart Route Modal ─── */}
+      {showRouteModal && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => { setShowRouteModal(false); setOutreachSent(false); }}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6 overflow-y-auto max-h-[90vh] lofty-card"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7c3aed" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 2l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="#7c3aed" />
+                  <path d="M3 9l.7 1.3L5 11l-1.3.7L3 13l-.7-1.3L1 11l1.3-.7z" fill="#7c3aed" />
+                  <path d="M11 9l5 5" />
+                </svg>
+                <h2 className="text-lg text-[var(--lofty-fg-1)]" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>AI Smart Route</h2>
+              </div>
+              <button
+                onClick={() => { setShowRouteModal(false); setOutreachSent(false); }}
+                className="text-[var(--lofty-fg-4)] hover:text-[var(--lofty-fg-1)]"
+                aria-label="Close"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 6l12 12M6 18L18 6" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Summary Stats */}
+            <div
+              className="flex justify-between"
+              style={{
+                background: 'var(--lofty-bg-muted)',
+                border: '1px solid var(--lofty-border)',
+                padding: '12px',
+                borderRadius: '12px',
+                marginBottom: '16px',
+              }}
+            >
+              {[
+                { value: `${aiClusteredShowings.length} showings clustered`, label: 'Optimized cluster' },
+                { value: '~45 min saved', label: 'Drive time' },
+                { value: '+14% close probability', label: 'AI forecast' },
+              ].map((stat, i) => (
+                <div key={i} className="flex-1 text-center">
+                  <p className="font-bold text-[var(--lofty-fg-1)]" style={{ fontSize: '18px' }}>{stat.value}</p>
+                  <p className="text-[var(--lofty-fg-4)]" style={{ fontSize: '11px' }}>{stat.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Timeline */}
+            <div className="mb-3">
+              {aiClusteredShowings.map((s, i) => {
+                const dotColor =
+                  s.intent === 'Hot' ? 'var(--lofty-danger-500)' :
+                  s.intent === 'Warm' ? 'var(--lofty-warning-500)' :
+                  'var(--lofty-fg-4)';
+                const isLast = i === aiClusteredShowings.length - 1;
+                return (
+                  <div key={i} className="flex gap-3 relative">
+                    <div className="flex flex-col items-center pt-1">
+                      <div
+                        style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '50%',
+                          backgroundColor: dotColor,
+                          flexShrink: 0,
+                        }}
+                      />
+                      {!isLast && (
+                        <div style={{ width: '1px', flex: 1, background: 'var(--lofty-border)', marginTop: '4px', minHeight: '32px' }} />
+                      )}
+                    </div>
+                    <div className="flex-1 pb-4 min-w-0">
+                      <p className="text-[13px] text-[var(--lofty-fg-1)]" style={{ fontWeight: 500 }}>
+                        {s.time} · {s.lead}
+                      </p>
+                      <p className="text-[12px] text-[var(--lofty-fg-4)]">{s.property}</p>
+                      <p className="text-[var(--lofty-fg-4)]" style={{ fontSize: '11px' }}>{s.address}</p>
+                      <p style={{ fontStyle: 'italic', color: 'var(--lofty-fg-4)', fontSize: '12px', marginTop: '2px' }}>
+                        <span style={{ fontStyle: 'normal' }}>AI: </span>{s.reason}
+                      </p>
+                      {s.consent_status === 'pending' && (
+                        <span
+                          className="inline-block mt-1"
+                          style={{
+                            backgroundColor: 'color-mix(in srgb, var(--lofty-warning-500) 15%, transparent)',
+                            color: 'var(--lofty-warning-500)',
+                            fontSize: '11px',
+                            borderRadius: '4px',
+                            padding: '2px 6px',
+                          }}
+                        >
+                          No auto-text
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Compliance Note */}
+            <p style={{ fontSize: '11px', color: 'var(--lofty-fg-4)', marginBottom: '16px' }}>
+              Automated messages will only be sent to opted-in leads. Each message includes an opt-out link per TCPA guidelines.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => { setShowRouteModal(false); setOutreachSent(false); }}
+              >
+                Cancel
+              </Button>
+              {outreachSent ? (
+                <Button
+                  disabled
+                  className="flex-1 text-white border-0 cursor-default"
+                  style={{ backgroundColor: 'var(--lofty-success-500)', opacity: 1 }}
+                >
+                  Outreach Sent ✓
+                </Button>
+              ) : (
+                <Button
+                  className="flex-1 gradient-brand text-white border-0"
+                  onClick={(e) => {
+                    (e.currentTarget as HTMLButtonElement).disabled = true;
+                    setTimeout(() => {
+                      setOutreachSent(true);
+                      setTimeout(() => {
+                        setShowRouteModal(false);
+                        setOutreachSent(false);
+                      }, 2000);
+                    }, 1500);
+                  }}
+                >
+                  Confirm & Text Opted-In Leads
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -782,7 +966,61 @@ export default function DashboardPage() {
               </div>
             </div>
           ) : (
-            <EmptyIllustration />
+            <div>
+              <p className="text-[11px] text-[var(--lofty-fg-4)] mb-3">
+                AI has identified a high-efficiency showing cluster in the Camelback Corridor for today. 3 leads, ~0.8 mi apart.
+              </p>
+              <div className="space-y-2">
+                {aiClusteredShowings.map((s, i) => {
+                  const borderColor =
+                    s.intent === 'Hot' ? 'var(--lofty-danger-500)' :
+                    s.intent === 'Warm' ? 'var(--lofty-warning-500)' :
+                    'var(--lofty-fg-4)';
+                  const badgeBg =
+                    s.intent === 'Hot' ? 'var(--lofty-danger-500)' :
+                    s.intent === 'Warm' ? 'var(--lofty-warning-500)' :
+                    'var(--lofty-fg-4)';
+                  return (
+                    <div
+                      key={i}
+                      className="pl-3 py-2 flex items-start justify-between gap-2"
+                      style={{ borderLeft: `4px solid ${borderColor}` }}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-bold text-[var(--lofty-fg-1)] flex items-center gap-1.5">
+                          <span>{s.lead}</span>
+                          {s.consent_status === 'pending' && (
+                            <span title="No outreach consent — message will be skipped" className="cursor-help">🔒</span>
+                          )}
+                          <span className="text-[var(--lofty-fg-4)] font-normal">·</span>
+                          <span>{s.time}</span>
+                        </p>
+                        <p className="text-[11px] text-[var(--lofty-fg-4)] truncate">{s.property}</p>
+                      </div>
+                      <span
+                        className="px-2 py-0.5 text-[10px] font-bold rounded-full text-white flex-shrink-0"
+                        style={{ backgroundColor: badgeBg }}
+                      >
+                        {s.intent}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <Button
+                disabled={routeGenerating}
+                onClick={() => {
+                  setRouteGenerating(true);
+                  setTimeout(() => {
+                    setRouteGenerating(false);
+                    setShowRouteModal(true);
+                  }, 1800);
+                }}
+                className="gradient-brand text-white border-0 shadow-md shadow-violet-500/25 mt-3 w-full"
+              >
+                {routeGenerating ? 'Analyzing leads...' : '✨ Generate AI Smart Route'}
+              </Button>
+            </div>
           )}
         </section>}
 
