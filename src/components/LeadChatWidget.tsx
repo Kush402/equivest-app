@@ -10,7 +10,25 @@ const LEAD = {
   score: 94,
 };
 
-const CHAT_HISTORY = [
+type ChatMessage = {
+  from: 'ai' | 'lead' | 'system';
+  text: string;
+  time: string;
+};
+
+type TriggerAutoTextDetail = {
+  showings: Array<{
+    time: string;
+    lead: string;
+    property: string;
+    address: string;
+    intent: string;
+    reason: string;
+    consent_status: string;
+  }>;
+};
+
+const CHAT_HISTORY: ChatMessage[] = [
   {
     from: 'ai',
     text: 'Hey Marcus! This is Alex from Vick\'s Real Estate. I saw you\'ve been checking out our Highland Tower listing — just wanted to reach out and see if you had any questions. It\'s one of our top picks right now.',
@@ -52,6 +70,7 @@ interface AppointmentInfo {
 
 export default function LeadChatWidget() {
   const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>(CHAT_HISTORY);
   const [callState, setCallState] = useState<CallState>('idle');
   const [callDuration, setCallDuration] = useState(0);
   const [liveTranscript, setLiveTranscript] = useState<string[]>([]);
@@ -66,7 +85,44 @@ export default function LeadChatWidget() {
 
   useEffect(() => {
     if (open) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [open, liveTranscript]);
+  }, [open, liveTranscript, messages]);
+
+  useEffect(() => {
+    function onTriggerAutoText(e: Event) {
+      const ev = e as CustomEvent<TriggerAutoTextDetail>;
+      const showings = ev.detail?.showings ?? [];
+      if (showings.length === 0) return;
+
+      const nowLabel = () =>
+        new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+      const scheduleText = showings
+        .slice(0, 2)
+        .map(s => `${s.time} - ${s.property}`)
+        .join(', ');
+
+      const outreach: ChatMessage = {
+        from: 'ai',
+        text: `Hey Marcus, I used our AI routing to optimize your showings today! Schedule: ${scheduleText}. See you there!`,
+        time: nowLabel(),
+      };
+      setMessages(prev => [...prev, outreach]);
+      setOpen(true);
+
+      const first = showings[0];
+      setTimeout(() => {
+        const reminder: ChatMessage = {
+          from: 'system',
+          text: `System: Automated 30-min reminder SMS successfully delivered to ${LEAD.name} (Buyer), the Listing Agent, and your mobile device (Agent) for the ${first.time} showing at ${first.property}.`,
+          time: nowLabel(),
+        };
+        setMessages(prev => [...prev, reminder]);
+      }, 4000);
+    }
+
+    window.addEventListener('trigger-auto-text', onTriggerAutoText);
+    return () => window.removeEventListener('trigger-auto-text', onTriggerAutoText);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -192,23 +248,35 @@ export default function LeadChatWidget() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-[#f8f8fc]" style={{ minHeight: 0 }}>
-              {CHAT_HISTORY.map((msg, i) => (
-                <div key={i} className={`flex ${msg.from === 'lead' ? 'justify-end' : 'justify-start'}`}>
-                  {msg.from === 'ai' && (
-                    <div className="w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center text-white text-[8px] font-bold mr-1.5 flex-shrink-0 mt-0.5">
-                      VRE
+              {messages.map((msg, i) => {
+                if (msg.from === 'system') {
+                  return (
+                    <div
+                      key={i}
+                      className="bg-gray-100 text-gray-500 text-[10px] italic rounded-full px-3 py-1 mx-auto my-2 text-center w-fit max-w-[90%] leading-snug"
+                    >
+                      {msg.text}
                     </div>
-                  )}
-                  <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-[12px] leading-relaxed ${
-                    msg.from === 'lead'
-                      ? 'bg-violet-600 text-white rounded-br-sm'
-                      : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm'
-                  }`}>
-                    <p>{msg.text}</p>
-                    <p className={`text-[10px] mt-1 ${msg.from === 'lead' ? 'text-violet-200' : 'text-gray-400'}`}>{msg.time}</p>
+                  );
+                }
+                return (
+                  <div key={i} className={`flex ${msg.from === 'lead' ? 'justify-end' : 'justify-start'}`}>
+                    {msg.from === 'ai' && (
+                      <div className="w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center text-white text-[8px] font-bold mr-1.5 flex-shrink-0 mt-0.5">
+                        VRE
+                      </div>
+                    )}
+                    <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-[12px] leading-relaxed ${
+                      msg.from === 'lead'
+                        ? 'bg-violet-600 text-white rounded-br-sm'
+                        : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm'
+                    }`}>
+                      <p>{msg.text}</p>
+                      <p className={`text-[10px] mt-1 ${msg.from === 'lead' ? 'text-violet-200' : 'text-gray-400'}`}>{msg.time}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               {/* Live call transcript */}
               {liveTranscript.length > 0 && (

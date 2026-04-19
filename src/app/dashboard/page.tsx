@@ -506,7 +506,6 @@ export default function DashboardPage() {
 
             {/* Summary Stats */}
             <div
-              className="flex justify-between"
               style={{
                 background: 'var(--lofty-bg-muted)',
                 border: '1px solid var(--lofty-border)',
@@ -515,16 +514,29 @@ export default function DashboardPage() {
                 marginBottom: '16px',
               }}
             >
-              {[
-                { value: `${aiClusteredShowings.length} showings clustered`, label: 'Optimized cluster' },
-                { value: '~45 min saved', label: 'Drive time' },
-                { value: '+14% close probability', label: 'AI forecast' },
-              ].map((stat, i) => (
-                <div key={i} className="flex-1 text-center">
-                  <p className="font-bold text-[var(--lofty-fg-1)]" style={{ fontSize: '18px' }}>{stat.value}</p>
-                  <p className="text-[var(--lofty-fg-4)]" style={{ fontSize: '11px' }}>{stat.label}</p>
-                </div>
-              ))}
+              <div className="flex justify-between">
+                {[
+                  { value: `${aiClusteredShowings.length} showings clustered`, label: 'Optimized cluster' },
+                  { value: '~45 min saved', label: 'Drive time' },
+                  { value: '+14% close probability', label: 'AI forecast' },
+                ].map((stat, i) => (
+                  <div key={i} className="flex-1 text-center">
+                    <p className="font-bold text-[var(--lofty-fg-1)]" style={{ fontSize: '18px' }}>{stat.value}</p>
+                    <p className="text-[var(--lofty-fg-4)]" style={{ fontSize: '11px' }}>{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+              <div
+                className="flex items-center gap-1.5 mt-3 pt-3"
+                style={{ borderTop: '1px solid var(--lofty-border)' }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--lofty-brand-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                </svg>
+                <p className="text-[var(--lofty-fg-2)]" style={{ fontSize: '11px' }}>
+                  <span className="font-semibold text-[var(--lofty-fg-1)]">Automations:</span> 30-min prior SMS reminders enabled for Buyers, Sellers, &amp; Agents
+                </p>
+              </div>
             </div>
 
             {/* Timeline */}
@@ -600,23 +612,23 @@ export default function DashboardPage() {
                   className="flex-1 text-white border-0 cursor-default"
                   style={{ backgroundColor: 'var(--lofty-success-500)', opacity: 1 }}
                 >
-                  Outreach Sent ✓
+                  Outreach Sent! ✓
                 </Button>
               ) : (
                 <Button
                   className="flex-1 gradient-brand text-white border-0"
-                  onClick={(e) => {
-                    (e.currentTarget as HTMLButtonElement).disabled = true;
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('trigger-auto-text', {
+                      detail: { showings: aiClusteredShowings },
+                    }));
+                    setOutreachSent(true);
                     setTimeout(() => {
-                      setOutreachSent(true);
-                      setTimeout(() => {
-                        setShowRouteModal(false);
-                        setOutreachSent(false);
-                      }, 2000);
-                    }, 1500);
+                      setShowRouteModal(false);
+                      setOutreachSent(false);
+                    }, 1000);
                   }}
                 >
-                  Confirm & Text Opted-In Leads
+                  Confirm & Auto-Text Leads
                 </Button>
               )}
             </div>
