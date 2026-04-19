@@ -251,7 +251,8 @@ export default function DashboardPage() {
   const [showWidgetPanel, setShowWidgetPanel] = useState(false);
   const [showTour, setShowTour] = useState(false);
   const [tourStartWidget, setTourStartWidget] = useState<WidgetId | undefined>(undefined);
-  const [pendingTourWidget, setPendingTourWidget] = useState<WidgetId | undefined>(undefined);
+  const [tourOnlyWidgets, setTourOnlyWidgets] = useState<WidgetId[] | undefined>(undefined);
+  const [pendingTourWidgets, setPendingTourWidgets] = useState<WidgetId[]>([]);
 
   useEffect(() => {
     try {
@@ -284,10 +285,11 @@ export default function DashboardPage() {
       // If the Add Widget panel is open, defer the tour until it closes
       // so the modal doesn't overlap the tour highlight.
       if (showWidgetPanel) {
-        setPendingTourWidget(id);
+        setPendingTourWidgets(prev => prev.includes(id) ? prev : [...prev, id]);
       } else {
         setTimeout(() => {
           setTourStartWidget(id);
+          setTourOnlyWidgets([id]);
           setShowTour(true);
         }, 400);
       }
@@ -296,11 +298,12 @@ export default function DashboardPage() {
 
   function closeWidgetPanel() {
     setShowWidgetPanel(false);
-    if (pendingTourWidget) {
-      const id = pendingTourWidget;
-      setPendingTourWidget(undefined);
+    if (pendingTourWidgets.length > 0) {
+      const ids = pendingTourWidgets;
+      setPendingTourWidgets([]);
       setTimeout(() => {
-        setTourStartWidget(id);
+        setTourStartWidget(ids[0]);
+        setTourOnlyWidgets(ids);
         setShowTour(true);
       }, 400);
     }
@@ -336,6 +339,7 @@ export default function DashboardPage() {
     // Launch full tour after all widgets are in DOM
     setTimeout(() => {
       setTourStartWidget(undefined);
+      setTourOnlyWidgets(undefined);
       setShowTour(true);
     }, ids.length * 200 + 600);
   }
@@ -351,9 +355,11 @@ export default function DashboardPage() {
       {showTour && (
         <DashboardTour
           initialWidgetId={tourStartWidget}
+          onlyWidgetIds={tourOnlyWidgets}
           onDone={() => {
             setShowTour(false);
             setTourStartWidget(undefined);
+            setTourOnlyWidgets(undefined);
             localStorage.setItem(TOUR_DONE_KEY, '1');
           }}
         />
@@ -385,7 +391,7 @@ export default function DashboardPage() {
                 ✦ Re-run AI Setup
               </button>
               <button
-                onClick={() => setShowTour(true)}
+                onClick={() => { setTourStartWidget(undefined); setTourOnlyWidgets(undefined); setShowTour(true); }}
                 className="text-[11px] text-gray-300 hover:text-violet-500 transition-colors font-medium border border-gray-200 hover:border-violet-300 rounded-md px-2 py-1 flex items-center gap-1"
                 title="Take a guided tour"
               >

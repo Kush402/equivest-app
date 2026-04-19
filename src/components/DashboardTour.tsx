@@ -29,9 +29,15 @@ const TOOLTIP_HEIGHT_ESTIMATE = 240;
 interface DashboardTourProps {
   onDone: () => void;
   initialWidgetId?: string;
+  /**
+   * If provided, the tour is scoped to only these widgets (in order).
+   * Used when the user adds one or more widgets — we narrate only the new ones.
+   * When omitted, the tour covers every widget currently in the DOM (full dashboard tour).
+   */
+  onlyWidgetIds?: string[];
 }
 
-export default function DashboardTour({ onDone, initialWidgetId }: DashboardTourProps) {
+export default function DashboardTour({ onDone, initialWidgetId, onlyWidgetIds }: DashboardTourProps) {
   const [stepIdx, setStepIdx]   = useState(0);
   const [steps, setSteps]       = useState<TourStep[]>([]);
   const [rect, setRect]         = useState<DOMRect | null>(null);
@@ -43,7 +49,14 @@ export default function DashboardTour({ onDone, initialWidgetId }: DashboardTour
 
   // Build active steps once on mount (only steps whose element exists in DOM)
   useEffect(() => {
-    const active = ALL_TOUR_STEPS.filter(s =>
+    let pool = ALL_TOUR_STEPS;
+    if (onlyWidgetIds && onlyWidgetIds.length > 0) {
+      const order = new Map(onlyWidgetIds.map((id, i) => [id, i]));
+      pool = ALL_TOUR_STEPS
+        .filter(s => order.has(s.widgetId))
+        .sort((a, b) => (order.get(a.widgetId)! - order.get(b.widgetId)!));
+    }
+    const active = pool.filter(s =>
       document.querySelector(`[data-widget-id="${s.widgetId}"]`) !== null
     );
     setSteps(active);
