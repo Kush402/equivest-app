@@ -31,7 +31,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
   return (
     <div className="group">
-      <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-violet-500/10 hover:-translate-y-1 hover:border-violet-100">
+      <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm transition-[transform,box-shadow] duration-300 hover:shadow-md hover:-translate-y-0.5">
 
         {/* ─── Image ─── */}
         <div className="relative h-52 overflow-hidden">
@@ -55,13 +55,13 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
           {/* Yield badge */}
           <div className="absolute top-3 right-3 pointer-events-none">
-            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20">
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-black/50 text-white border border-white/20">
               {property.yield}% yield
             </span>
           </div>
 
           {/* ─── Hover overlay: Quick stats ─── */}
-          <div className="absolute inset-0 bg-violet-900/85 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 bg-violet-900/85 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
             <div className="grid grid-cols-2 gap-3 px-6 w-full">
               {[
                 { label: 'Total Return', value: `${property.totalReturn}%` },
@@ -96,7 +96,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           {/* Title + value */}
           <div className="flex items-start justify-between mb-2 gap-2">
             <div>
-              <h3 className="font-bold text-gray-900 text-[15px] leading-tight group-hover:text-violet-700 transition-colors" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <h3 className="font-bold text-gray-900 text-[15px] leading-tight group-hover:text-violet-700 transition-colors">
                 {property.name}
               </h3>
               <p className="text-[10px] text-gray-400 mt-0.5">{property.type}</p>
@@ -167,7 +167,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
               <p className="text-[9px] text-gray-400">Min. investment</p>
               <p className="text-sm font-bold text-gray-900">{formatCurrency(property.minInvestment)}</p>
             </div>
-            <div className="flex items-center gap-1 text-violet-600 text-xs font-bold group-hover:gap-2 transition-all duration-200">
+            <div className="flex items-center gap-1 text-violet-600 text-xs font-bold group-hover:gap-2 transition-[gap] duration-200">
               View deal
               <svg className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>

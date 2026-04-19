@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -244,7 +244,7 @@ export default function DashboardPage() {
   const [showRouteModal, setShowRouteModal] = useState(false);
   const [routeGenerating, setRouteGenerating] = useState(false);
   const [outreachSent, setOutreachSent] = useState(false);
-  const portfolioHistory = generatePortfolioHistory(12);
+  const portfolioHistory = useMemo(() => generatePortfolioHistory(12), []);
   const { isComplete, setIsComplete, profile, setProfile } = useOnboardingComplete();
   const [agentName, setAgentName] = useState('Alex');
   const [visibleWidgets, setVisibleWidgets] = useState<Set<WidgetId>>(new Set());
@@ -349,7 +349,7 @@ export default function DashboardPage() {
   const hasHoldings = holdings.length > 0;
 
   return (
-    <main className="min-h-screen bg-[#f5f6f8] pt-16">
+    <main className="min-h-screen bg-[var(--lofty-bg-muted)] pt-16">
 
       {/* ─── Dashboard Tour ─── */}
       {showTour && (
@@ -368,7 +368,7 @@ export default function DashboardPage() {
       {/* ─── Greeting Row ─── */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-[28px] leading-none font-extrabold text-gray-900 flex items-center gap-2" style={{ fontFamily: 'Syne, sans-serif' }}>
+          <h1 className="text-[28px] leading-none font-extrabold text-gray-900 flex items-center gap-2">
             <span className="text-3xl">👋</span>
             Good Morning, {agentName}
             <span className="text-2xl">💼</span>
@@ -432,7 +432,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
             {withdrawStep === 'selecting' && (
               <>
-                <h3 className="font-bold text-xl text-gray-900 mb-1" style={{ fontFamily: 'Syne, sans-serif' }}>Withdraw Earnings</h3>
+                <h3 className="font-bold text-xl text-gray-900 mb-1">Withdraw Earnings</h3>
                 <p className="text-xs text-gray-400 mb-5">Available balance: <span className="font-bold text-gray-700">{formatCurrency(parseFloat(totalEarned.toFixed(2)))}</span></p>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Amount (USD)</label>
                 <input
@@ -455,7 +455,7 @@ export default function DashboardPage() {
                 <p className="text-xs text-gray-400 mb-4">Funds arrive in 1–3 business days via ACH transfer.</p>
                 <div className="flex gap-3">
                   <Button variant="outline" className="flex-1" onClick={() => setWithdrawStep('idle')}>Cancel</Button>
-                  <Button className="flex-1 gradient-brand text-white border-0 shadow-md shadow-violet-500/25" onClick={() => setWithdrawStep('confirm')}>Review →</Button>
+                  <Button className="flex-1 gradient-brand text-white border-0 shadow-md" onClick={() => setWithdrawStep('confirm')}>Review →</Button>
                 </div>
               </>
             )}
@@ -467,8 +467,8 @@ export default function DashboardPage() {
                     <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
-                <h3 className="font-bold text-xl text-gray-900 mb-1" style={{ fontFamily: 'Syne, sans-serif' }}>Confirm Withdrawal</h3>
-                <p className="text-xs text-gray-400 mb-5">Please review before submitting.</p>
+                <h3 className="font-bold text-xl text-gray-900 mb-1">Confirm Withdrawal</h3>
+                <p className="text-xs text-gray-400 mb-5">Review the details below before submitting.</p>
                 <div className="bg-gray-50 rounded-xl p-4 space-y-3 mb-5">
                   <div className="flex justify-between text-sm"><span className="text-gray-500">Amount</span><span className="font-bold">${withdrawAmount}</span></div>
                   <div className="flex justify-between text-sm"><span className="text-gray-500">Method</span><span className="font-bold">ACH · Chase ••••4821</span></div>
@@ -477,21 +477,21 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex gap-3">
                   <Button variant="outline" className="flex-1" onClick={() => setWithdrawStep('selecting')}>← Back</Button>
-                  <Button className="flex-1 gradient-brand text-white border-0 shadow-md shadow-violet-500/25" onClick={() => setWithdrawStep('done')}>Confirm</Button>
+                  <Button className="flex-1 gradient-brand text-white border-0 shadow-md" onClick={() => setWithdrawStep('done')}>Confirm withdrawal</Button>
                 </div>
               </>
             )}
 
             {withdrawStep === 'done' && (
               <div className="text-center py-2">
-                <div className="w-16 h-16 rounded-2xl gradient-brand flex items-center justify-center mx-auto mb-4 shadow-lg shadow-violet-500/30">
+                <div className="w-16 h-16 rounded-2xl gradient-brand flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
-                <h3 className="font-bold text-xl text-gray-900 mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>Withdrawal Submitted!</h3>
+                <h3 className="font-bold text-xl text-gray-900 mb-2">Withdrawal Submitted!</h3>
                 <p className="text-sm text-gray-500 mb-5">${withdrawAmount} will arrive in 1–3 business days to your Chase account ending in 4821.</p>
-                <Button className="w-full gradient-brand text-white border-0" onClick={() => setWithdrawStep('idle')}>Done</Button>
+                <Button className="w-full gradient-brand text-white border-0" onClick={() => setWithdrawStep('idle')}>Back to dashboard</Button>
               </div>
             )}
           </div>
@@ -511,12 +511,12 @@ export default function DashboardPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7c3aed" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 2l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="#7c3aed" />
-                  <path d="M3 9l.7 1.3L5 11l-1.3.7L3 13l-.7-1.3L1 11l1.3-.7z" fill="#7c3aed" />
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--brand)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 2l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="var(--brand)" />
+                  <path d="M3 9l.7 1.3L5 11l-1.3.7L3 13l-.7-1.3L1 11l1.3-.7z" fill="var(--brand)" />
                   <path d="M11 9l5 5" />
                 </svg>
-                <h2 className="text-lg text-[var(--lofty-fg-1)]" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>AI Smart Route</h2>
+                <h2 className="text-lg font-semibold text-[var(--lofty-fg-1)]">AI Smart Route</h2>
               </div>
               <button
                 onClick={() => { setShowRouteModal(false); setOutreachSent(false); }}
@@ -698,9 +698,9 @@ export default function DashboardPage() {
                 { label: 'Total Earned',    value: formatCurrency(totalEarned),   sub: 'cumulative income',   color: 'text-violet-600' },
                 { label: 'Monthly Income',  value: formatCurrency(totalMonthly),  sub: 'est. next payout',    color: 'text-sky-600' },
               ].map(s => (
-                <div key={s.label} className="bg-[#f5f6f8] rounded-lg p-3">
+                <div key={s.label} className="bg-[var(--lofty-bg-muted)] rounded-lg p-3">
                   <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-1">{s.label}</p>
-                  <p className={`text-[18px] font-extrabold leading-none ${s.color}`} style={{ fontFamily: 'Syne, sans-serif' }}>{s.value}</p>
+                  <p className={`text-[18px] font-extrabold leading-none ${s.color}`}>{s.value}</p>
                   <p className="text-[10px] text-gray-400 mt-1">{s.sub}</p>
                 </div>
               ))}
@@ -835,7 +835,7 @@ export default function DashboardPage() {
                   </span>
                 </Link>
               ))}
-              <Link href="/marketplace" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-2">View All &gt;</Link>
+              <Link href="/marketplace" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-2">View all →</Link>
             </div>
           ) : (
             <EmptyIllustration />
@@ -853,7 +853,7 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2 bg-[#f5f6f8] rounded-lg p-3 mb-4">
+          <div className="grid grid-cols-3 gap-2 bg-[var(--lofty-bg-muted)] rounded-lg p-3 mb-4">
             {[
               { label: 'High Yield',   value: holdings.filter(h => h.yield >= 7).length },
               { label: 'Top Gainers',  value: holdings.filter(h => h.change >= 10).length },
@@ -861,7 +861,7 @@ export default function DashboardPage() {
             ].map(s => (
               <div key={s.label} className="text-center">
                 <p className="text-[10px] text-gray-500 uppercase tracking-wide">{s.label}</p>
-                <p className="text-2xl font-extrabold text-gray-900 mt-1" style={{ fontFamily: 'Syne, sans-serif' }}>{s.value}</p>
+                <p className="text-2xl font-extrabold text-gray-900 mt-1">{s.value}</p>
               </div>
             ))}
           </div>
@@ -894,14 +894,14 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 bg-[#f5f6f8] rounded-lg p-3 mb-4">
+          <div className="grid grid-cols-2 gap-2 bg-[var(--lofty-bg-muted)] rounded-lg p-3 mb-4">
             <div className="text-center">
               <p className="text-[11px] text-gray-500">Distributions</p>
-              <p className="text-xl font-extrabold text-gray-900 mt-0.5" style={{ fontFamily: 'Syne, sans-serif' }}>{holdings.length}</p>
+              <p className="text-xl font-extrabold text-gray-900 mt-0.5">{holdings.length}</p>
             </div>
             <div className="text-center">
               <p className="text-[11px] text-gray-500">Follow-Up</p>
-              <p className="text-xl font-extrabold text-gray-900 mt-0.5" style={{ fontFamily: 'Syne, sans-serif' }}>{activity.length}</p>
+              <p className="text-xl font-extrabold text-gray-900 mt-0.5">{activity.length}</p>
             </div>
           </div>
           <div className="space-y-3">
@@ -913,7 +913,7 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-          <Link href="#" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View All &gt;</Link>
+          <Link href="#" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View all →</Link>
         </section>}
 
         {/* Widget: Transactions */}
@@ -927,14 +927,14 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 bg-[#f5f6f8] rounded-lg p-3 mb-4">
+          <div className="grid grid-cols-2 gap-2 bg-[var(--lofty-bg-muted)] rounded-lg p-3 mb-4">
             <div className="text-center">
               <p className="text-[11px] text-gray-500">Near Deadline</p>
-              <p className="text-xl font-extrabold text-gray-900 mt-0.5" style={{ fontFamily: 'Syne, sans-serif' }}>{activity.filter(a => a.type === 'distribution').length}</p>
+              <p className="text-xl font-extrabold text-gray-900 mt-0.5">{activity.filter(a => a.type === 'distribution').length}</p>
             </div>
             <div className="text-center">
               <p className="text-[11px] text-gray-500">Expired</p>
-              <p className="text-xl font-extrabold text-gray-900 mt-0.5" style={{ fontFamily: 'Syne, sans-serif' }}>0</p>
+              <p className="text-xl font-extrabold text-gray-900 mt-0.5">0</p>
             </div>
           </div>
           <div className="space-y-3">
@@ -948,7 +948,7 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-          <Link href="#" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View All &gt;</Link>
+          <Link href="#" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View all →</Link>
         </section>}
 
         {/* Widget: Today's Tasks */}
@@ -971,7 +971,7 @@ export default function DashboardPage() {
             ].map(t => (
               <div key={t.label} className={`rounded-md ${t.bg} p-2.5 text-center`}>
                 <p className={`text-[10px] font-semibold ${t.color}`}>{t.label}</p>
-                <p className={`text-lg font-extrabold mt-0.5 ${t.color}`} style={{ fontFamily: 'Syne, sans-serif' }}>{t.value}</p>
+                <p className={`text-lg font-extrabold mt-0.5 ${t.color}`}>{t.value}</p>
               </div>
             ))}
           </div>
@@ -1041,10 +1041,6 @@ export default function DashboardPage() {
               </p>
               <div className="space-y-2">
                 {aiClusteredShowings.map((s, i) => {
-                  const borderColor =
-                    s.intent === 'Hot' ? 'var(--lofty-danger-500)' :
-                    s.intent === 'Warm' ? 'var(--lofty-warning-500)' :
-                    'var(--lofty-fg-4)';
                   const badgeBg =
                     s.intent === 'Hot' ? 'var(--lofty-danger-500)' :
                     s.intent === 'Warm' ? 'var(--lofty-warning-500)' :
@@ -1052,8 +1048,7 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={i}
-                      className="pl-3 py-2 flex items-start justify-between gap-2"
-                      style={{ borderLeft: `4px solid ${borderColor}` }}
+                      className="py-2 flex items-start justify-between gap-2"
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-[13px] font-bold text-[var(--lofty-fg-1)] flex items-center gap-1.5">
@@ -1085,7 +1080,7 @@ export default function DashboardPage() {
                     setShowRouteModal(true);
                   }, 1800);
                 }}
-                className="gradient-brand text-white border-0 shadow-md shadow-violet-500/25 mt-3 w-full"
+                className="gradient-brand text-white border-0 shadow-md mt-3 w-full"
               >
                 {routeGenerating ? 'Analyzing leads...' : '✨ Generate AI Smart Route'}
               </Button>
@@ -1127,7 +1122,7 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-          <Link href="/marketplace" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View All &gt;</Link>
+          <Link href="/marketplace" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View all →</Link>
         </section>}
 
         {/* Widget: Hot Sheets */}
@@ -1165,7 +1160,7 @@ export default function DashboardPage() {
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 bg-[#f5f6f8] rounded-lg p-3 mb-4">
+            <div className="grid grid-cols-2 gap-2 bg-[var(--lofty-bg-muted)] rounded-lg p-3 mb-4">
               {[
                 { label: 'New Listings',  value: '1,247',  sub: 'this week',       color: 'text-violet-600' },
                 { label: 'Avg. Yield',    value: '7.2%',   sub: 'platform-wide',   color: 'text-emerald-600' },
@@ -1174,7 +1169,7 @@ export default function DashboardPage() {
               ].map(s => (
                 <div key={s.label} className="text-center">
                   <p className="text-[10px] text-gray-400 uppercase tracking-wide">{s.label}</p>
-                  <p className={`text-xl font-extrabold mt-0.5 ${s.color}`} style={{ fontFamily: 'Syne, sans-serif' }}>{s.value}</p>
+                  <p className={`text-xl font-extrabold mt-0.5 ${s.color}`}>{s.value}</p>
                   <p className="text-[10px] text-gray-400">{s.sub}</p>
                 </div>
               ))}
@@ -1265,7 +1260,7 @@ export default function DashboardPage() {
           <div className="bg-white h-full w-full max-w-sm shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <div>
-                <h2 className="text-[17px] font-bold text-gray-900" style={{ fontFamily: 'Syne, sans-serif' }}>Customize Dashboard</h2>
+                <h2 className="text-[17px] font-bold text-gray-900">Customize Dashboard</h2>
                 <p className="text-xs text-gray-400 mt-0.5">Toggle widgets on or off</p>
               </div>
               <button onClick={closeWidgetPanel} className="text-gray-400 hover:text-gray-600">
@@ -1300,7 +1295,7 @@ export default function DashboardPage() {
             <div className="px-6 py-4 border-t border-gray-100">
               <button
                 onClick={closeWidgetPanel}
-                className="w-full py-2.5 rounded-xl gradient-brand text-white text-sm font-semibold shadow-sm shadow-violet-400/30"
+                className="w-full py-2.5 rounded-xl gradient-brand text-white text-sm font-semibold shadow-sm"
               >
                 Done
               </button>
@@ -1316,7 +1311,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">Portfolio Performance · 12 mo</p>
-              <p className="text-2xl font-extrabold text-gray-900" style={{ fontFamily: 'Syne, sans-serif' }}>{formatCurrency(totalValue)}</p>
+              <p className="text-2xl font-extrabold text-gray-900">{formatCurrency(totalValue)}</p>
             </div>
             <div className="text-right">
               <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">ROI</p>
@@ -1361,7 +1356,7 @@ export default function DashboardPage() {
           <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 blur-2xl" style={{ background: 'white', transform: 'translate(20%, -20%)' }} />
           <div className="relative">
             <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-1">Next Distribution</p>
-            <p className="text-white text-2xl font-extrabold" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <p className="text-white text-2xl font-extrabold">
               {formatCurrency(totalMonthly)} <span className="text-white/60 text-sm font-medium">· Est. May 15, 2026</span>
             </p>
           </div>
@@ -1369,12 +1364,12 @@ export default function DashboardPage() {
             <Button
               onClick={() => setWithdrawStep('selecting')}
               variant="outline"
-              className="border-white/30 text-white hover:bg-white/10 bg-white/5 backdrop-blur-sm"
+              className="border-white/30 text-white hover:bg-white/10 bg-transparent"
             >
               Withdraw Funds
             </Button>
             <Link href="/marketplace" id="dashboard-invest-btn">
-              <Button className="bg-white text-violet-700 border-0 shadow-lg hover:scale-[1.02] transition-all font-semibold">+ Invest More</Button>
+              <Button className="bg-white text-violet-700 border-0 shadow-lg hover:scale-[1.02] transition-transform font-semibold">+ Invest More</Button>
             </Link>
           </div>
         </div>

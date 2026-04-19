@@ -34,10 +34,10 @@ export default function ValueGrowthChart({ data, purchasePrice }: ValueGrowthCha
               <stop offset="95%" stopColor="oklch(0.52 0.22 278)" stopOpacity={0.01}/>
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-          <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
           <YAxis
-            tick={{ fontSize: 10, fill: '#94a3b8' }}
+            tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
             axisLine={false} tickLine={false}
             tickFormatter={v => `$${(v/1_000_000).toFixed(1)}M`}
             width={42}
@@ -46,9 +46,9 @@ export default function ValueGrowthChart({ data, purchasePrice }: ValueGrowthCha
           <Tooltip content={<CustomTooltip />} />
           <ReferenceLine
             y={purchasePrice}
-            stroke="#94a3b8"
+            stroke="var(--muted-foreground)"
             strokeDasharray="4 4"
-            label={{ value: 'Purchase price', position: 'insideTopRight', fill: '#94a3b8', fontSize: 9 }}
+            label={{ value: 'Purchase price', position: 'insideTopRight', fill: 'var(--muted-foreground)', fontSize: 9 }}
           />
           <Area
             type="monotone"

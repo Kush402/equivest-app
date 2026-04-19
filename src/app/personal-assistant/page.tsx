@@ -56,10 +56,10 @@ function getAIResponse(input: string): ScriptedResponse {
     return {
       text: `I found **23 high-intent leads** in the 85281 zip code (Tempe, AZ). I've scored them by engagement and motivated-seller signals. Here are the top prospects:`,
       cards: [
-        { type: 'lead', title: 'Sarah Chen', subtitle: 'Tempe, AZ 85281 · Buyer', meta: 'Viewed 6 listings · Pre-approved $480K', badge: 'Score 97', badgeColor: '#16B47C' },
-        { type: 'lead', title: 'David Okafor', subtitle: 'Tempe, AZ 85281 · Seller', meta: 'Motivated seller · Listed 90+ days', badge: 'Score 91', badgeColor: '#16B47C' },
-        { type: 'lead', title: 'Maria Gonzalez', subtitle: 'Tempe, AZ 85281 · Renter→Buyer', meta: 'Lease ending in 45 days · Inquiry 3x', badge: 'Score 88', badgeColor: '#3C5BFF' },
-        { type: 'lead', title: 'James Whitfield', subtitle: 'Tempe, AZ 85281 · Investor', meta: 'Looking for 6%+ yield · Cash buyer', badge: 'Score 84', badgeColor: '#3C5BFF' },
+        { type: 'lead', title: 'Sarah Chen', subtitle: 'Tempe, AZ 85281 · Buyer', meta: 'Viewed 6 listings · Pre-approved $480K', badge: 'Score 97', badgeColor: 'var(--lofty-success-500)' },
+        { type: 'lead', title: 'David Okafor', subtitle: 'Tempe, AZ 85281 · Seller', meta: 'Motivated seller · Listed 90+ days', badge: 'Score 91', badgeColor: 'var(--lofty-success-500)' },
+        { type: 'lead', title: 'Maria Gonzalez', subtitle: 'Tempe, AZ 85281 · Renter→Buyer', meta: 'Lease ending in 45 days · Inquiry 3x', badge: 'Score 88', badgeColor: 'var(--lofty-brand-500)' },
+        { type: 'lead', title: 'James Whitfield', subtitle: 'Tempe, AZ 85281 · Investor', meta: 'Looking for 6%+ yield · Cash buyer', badge: 'Score 84', badgeColor: 'var(--lofty-brand-500)' },
       ],
       tasks: [
         { title: 'Review 85281 lead list (23 contacts)', status: 'pending', priority: 'high', due: 'Today', source: 'AI Lead Search' },
@@ -73,9 +73,9 @@ function getAIResponse(input: string): ScriptedResponse {
     return {
       text: `Done. I've created a **5-step drip campaign** targeting your 85281 leads. It's personalized to each contact's behavior — buyers get property alerts, the seller gets a CMA offer, and the renter gets first-time buyer content. First messages go out at 9 AM tomorrow.`,
       cards: [
-        { type: 'campaign', title: '85281 Buyer Nurture Sequence', subtitle: '5 emails · 14 days', meta: 'Personalized to search history & pre-approval', badge: 'Active', badgeColor: '#16B47C' },
-        { type: 'campaign', title: '85281 Seller Outreach', subtitle: '3 emails + 2 SMS · 7 days', meta: 'CMA offer + market stats for Tempe', badge: 'Scheduled', badgeColor: '#F59E0B' },
-        { type: 'campaign', title: 'Renter-to-Buyer Conversion', subtitle: '4 emails · 21 days', meta: 'First-time buyer guide + affordability calc', badge: 'Scheduled', badgeColor: '#F59E0B' },
+        { type: 'campaign', title: '85281 Buyer Nurture Sequence', subtitle: '5 emails · 14 days', meta: 'Personalized to search history & pre-approval', badge: 'Active', badgeColor: 'var(--lofty-success-500)' },
+        { type: 'campaign', title: '85281 Seller Outreach', subtitle: '3 emails + 2 SMS · 7 days', meta: 'CMA offer + market stats for Tempe', badge: 'Scheduled', badgeColor: 'var(--lofty-warning-500)' },
+        { type: 'campaign', title: 'Renter-to-Buyer Conversion', subtitle: '4 emails · 21 days', meta: 'First-time buyer guide + affordability calc', badge: 'Scheduled', badgeColor: 'var(--lofty-warning-500)' },
       ],
       tasks: [
         { title: 'Approve outreach copy before send', status: 'pending', priority: 'high', due: 'Today', source: 'AI Campaign Builder' },
@@ -92,8 +92,8 @@ function getAIResponse(input: string): ScriptedResponse {
     return {
       text: `I've scheduled **4 showings** for this week based on lead availability and your calendar. I also set 15-minute prep reminders and sent confirmation texts to each contact.`,
       cards: [
-        { type: 'showing', title: '142 W Elm St, Tempe', subtitle: 'Sarah Chen · Tue 10:00 AM', meta: '3bd/2ba · $389K · MLS #AZ4821', badge: 'Confirmed', badgeColor: '#16B47C' },
-        { type: 'showing', title: '887 S Mill Ave #4, Tempe', subtitle: 'James Whitfield · Wed 2:30 PM', meta: 'Condo · $299K · 6.1% cap rate', badge: 'Confirmed', badgeColor: '#16B47C' },
+        { type: 'showing', title: '142 W Elm St, Tempe', subtitle: 'Sarah Chen · Tue 10:00 AM', meta: '3bd/2ba · $389K · MLS #AZ4821', badge: 'Confirmed', badgeColor: 'var(--lofty-success-500)' },
+        { type: 'showing', title: '887 S Mill Ave #4, Tempe', subtitle: 'James Whitfield · Wed 2:30 PM', meta: 'Condo · $299K · 6.1% cap rate', badge: 'Confirmed', badgeColor: 'var(--lofty-success-500)' },
       ],
       tasks: [
         { title: 'Showing prep: 142 W Elm St (Tue 10 AM)', status: 'pending', priority: 'high', due: 'Monday', source: 'AI Scheduler' },
@@ -110,7 +110,7 @@ function getAIResponse(input: string): ScriptedResponse {
     return {
       text: `I pulled comps for the Tempe 85281 area. Based on 14 recent sales within 0.5 miles, here's the CMA summary. I can generate a branded PDF report to send to your seller clients.`,
       cards: [
-        { type: 'cma', title: 'CMA: Tempe 85281', subtitle: '14 comps · Last 90 days', meta: 'Avg sold: $387K · Avg DOM: 22 days · List-to-sale: 98.7%', badge: 'Ready', badgeColor: '#3C5BFF' },
+        { type: 'cma', title: 'CMA: Tempe 85281', subtitle: '14 comps · Last 90 days', meta: 'Avg sold: $387K · Avg DOM: 22 days · List-to-sale: 98.7%', badge: 'Ready', badgeColor: 'var(--lofty-brand-500)' },
       ],
       tasks: [
         { title: 'Send CMA PDF to David Okafor', status: 'pending', priority: 'high', due: 'Today', source: 'AI CMA Tool' },
@@ -123,7 +123,7 @@ function getAIResponse(input: string): ScriptedResponse {
     return {
       text: `I've drafted a listing description using the property details and optimized it for search. I can syndicate to Zillow, Realtor.com, and 40+ portals with one click. AI-generated photos are also queued.`,
       cards: [
-        { type: 'listing', title: '142 W Elm St, Tempe AZ 85281', subtitle: '3bd/2ba · 1,420 sqft · $389,000', meta: 'Draft ready · SEO score 94/100', badge: 'Draft', badgeColor: '#F59E0B' },
+        { type: 'listing', title: '142 W Elm St, Tempe AZ 85281', subtitle: '3bd/2ba · 1,420 sqft · $389,000', meta: 'Draft ready · SEO score 94/100', badge: 'Draft', badgeColor: 'var(--lofty-warning-500)' },
       ],
       tasks: [
         { title: 'Review and approve listing copy', status: 'pending', priority: 'high', due: 'Today', source: 'AI Listing Builder' },
@@ -185,15 +185,15 @@ function uid() {
 }
 
 const PRIORITY_COLORS: Record<Task['priority'], string> = {
-  high: '#EF4444',
-  medium: '#F59E0B',
-  low: '#6B7280',
+  high: 'var(--lofty-danger-500)',
+  medium: 'var(--lofty-warning-500)',
+  low: 'var(--lofty-fg-3)',
 };
 
 const PRIORITY_BG: Record<Task['priority'], string> = {
-  high: '#FEF2F2',
-  medium: '#FFFBEB',
-  low: '#F9FAFB',
+  high: 'var(--lofty-danger-050)',
+  medium: 'var(--lofty-warning-050)',
+  low: 'var(--lofty-bg-muted)',
 };
 
 // ─── Card Components ──────────────────────────────────────────────────────────
@@ -204,7 +204,7 @@ function LeadCard({ card }: { card: ActionCard }) {
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #3C5BFF, #16B47C)' }}>
+            style={{ background: 'var(--lofty-brand-500)' }}>
             {card.title.split(' ').map(w => w[0]).join('').slice(0, 2)}
           </div>
           <div>
@@ -310,7 +310,7 @@ function MessageBubble({ msg }: { msg: Message }) {
     <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       {!isUser && (
         <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-bold"
-          style={{ background: 'linear-gradient(135deg, #3C5BFF 0%, #16B47C 100%)' }}>
+          style={{ background: 'var(--lofty-brand-500)' }}>
           AI
         </div>
       )}
@@ -318,7 +318,7 @@ function MessageBubble({ msg }: { msg: Message }) {
         <div
           className="rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed"
           style={isUser
-            ? { background: 'var(--lofty-brand-500)', color: '#fff' }
+            ? { background: 'var(--lofty-brand-500)', color: 'var(--brand-foreground)' }
             : { background: 'var(--lofty-bg-muted)', color: 'var(--lofty-fg-1)', border: '1px solid var(--lofty-border)' }
           }
         >
@@ -340,13 +340,13 @@ function TypingIndicator() {
   return (
     <div className="flex gap-3">
       <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-bold"
-        style={{ background: 'linear-gradient(135deg, #3C5BFF 0%, #16B47C 100%)' }}>
+        style={{ background: 'var(--lofty-brand-500)' }}>
         AI
       </div>
       <div className="rounded-2xl px-4 py-3 flex items-center gap-1.5"
         style={{ background: 'var(--lofty-bg-muted)', border: '1px solid var(--lofty-border)' }}>
         {[0, 1, 2].map(i => (
-          <span key={i} className="w-1.5 h-1.5 rounded-full animate-bounce"
+          <span key={i} className="w-1.5 h-1.5 rounded-full typing-dot"
             style={{ background: 'var(--lofty-fg-3)', animationDelay: `${i * 0.15}s` }} />
         ))}
       </div>
@@ -449,7 +449,7 @@ export default function PersonalAssistantPage() {
         style={{ background: 'var(--lofty-bg-surface)', borderColor: 'var(--lofty-border)' }}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold"
-            style={{ background: 'linear-gradient(135deg, #3C5BFF 0%, #16B47C 100%)' }}>
+            style={{ background: 'var(--lofty-brand-500)' }}>
             AI
           </div>
           <div>
@@ -459,8 +459,8 @@ export default function PersonalAssistantPage() {
         </div>
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1.5 text-[12px] px-3 py-1 rounded-full"
-            style={{ background: '#ECFDF5', color: '#16B47C', fontWeight: 600 }}>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#16B47C] animate-pulse" />
+            style={{ background: 'var(--lofty-success-050)', color: 'var(--lofty-success-500)', fontWeight: 600 }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--lofty-success-500)] animate-pulse" />
             AI Online
           </span>
         </div>
@@ -588,8 +588,8 @@ export default function PersonalAssistantPage() {
                           onClick={() => toggleTaskStatus(task.id)}
                           className="w-4.5 h-4.5 mt-0.5 rounded flex-shrink-0 flex items-center justify-center border-2 transition-colors"
                           style={{
-                            borderColor: task.status === 'done' ? '#16B47C' : 'var(--lofty-border-strong)',
-                            background: task.status === 'done' ? '#16B47C' : 'transparent',
+                            borderColor: task.status === 'done' ? 'var(--lofty-success-500)' : 'var(--lofty-border-strong)',
+                            background: task.status === 'done' ? 'var(--lofty-success-500)' : 'transparent',
                           }}
                         >
                           {task.status === 'done' && (
@@ -658,7 +658,7 @@ export default function PersonalAssistantPage() {
                           onClick={() => toggleAutomation(auto.id)}
                           className="flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors"
                           style={auto.status === 'active'
-                            ? { background: '#ECFDF5', color: '#16B47C' }
+                            ? { background: 'var(--lofty-success-050)', color: 'var(--lofty-success-500)' }
                             : { background: 'var(--lofty-bg-muted)', color: 'var(--lofty-fg-3)' }
                           }
                         >

@@ -39,11 +39,11 @@ export default function EarningsChart({ data }: EarningsChartProps) {
               <stop offset="95%" stopColor="oklch(0.52 0.22 278)" stopOpacity={0.02}/>
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-          <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
           <YAxis
             yAxisId="value"
-            tick={{ fontSize: 10, fill: '#94a3b8' }}
+            tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
             axisLine={false} tickLine={false}
             tickFormatter={v => `$${v.toLocaleString()}`}
             width={48}
@@ -51,7 +51,7 @@ export default function EarningsChart({ data }: EarningsChartProps) {
           <YAxis
             yAxisId="roi"
             orientation="right"
-            tick={{ fontSize: 10, fill: '#94a3b8' }}
+            tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
             axisLine={false} tickLine={false}
             tickFormatter={v => `${v}%`}
             width={32}
@@ -73,7 +73,7 @@ export default function EarningsChart({ data }: EarningsChartProps) {
             type="monotone"
             dataKey="invested"
             name="Invested"
-            stroke="#94a3b8"
+            stroke="var(--muted-foreground)"
             strokeWidth={1.5}
             strokeDasharray="4 4"
             dot={false}

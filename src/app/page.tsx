@@ -90,23 +90,19 @@ export default function Home() {
           backgroundSize: '48px 48px'
         }} />
 
-        {/* Gradient blob */}
-        <div className="absolute top-1/4 right-1/4 w-[600px] h-[600px] rounded-full opacity-20 blur-3xl" style={{ background: 'radial-gradient(circle, oklch(0.52 0.22 278), transparent)' }} />
-        <div className="absolute bottom-1/4 left-1/4 w-[400px] h-[400px] rounded-full opacity-10 blur-3xl" style={{ background: 'radial-gradient(circle, oklch(0.62 0.2 300), transparent)' }} />
-
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left: Copy */}
             <div className="space-y-8">
               {/* Eyebrow */}
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border" style={{ background: 'oklch(0.52 0.22 278 / 15%)', borderColor: 'oklch(0.52 0.22 278 / 30%)', color: 'oklch(0.72 0.18 278)' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-current" />
                 $284M+ in properties funded
               </div>
 
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-[1.05] tracking-tight" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-[1.05] tracking-tight">
                 Own a piece of{' '}
-                <span className="text-gradient">premium real estate</span>
+                <span className="text-violet-300">premium real estate</span>
                 {' '}for $50
               </h1>
 
@@ -115,10 +111,15 @@ export default function Home() {
               </p>
 
               <div className="flex flex-wrap gap-4">
-                <Button size="lg" className="gradient-brand text-white border-0 h-13 px-8 text-base font-semibold shadow-2xl shadow-violet-500/30 hover:shadow-violet-500/50 hover:scale-[1.02] transition-all" asChild>
+                <Button size="lg" className="gradient-brand text-white border-0 h-13 px-8 text-base font-semibold shadow-xl hover:scale-[1.02] transition-transform" asChild>
                   <Link href="/marketplace" id="hero-cta-browse">Browse Properties →</Link>
                 </Button>
-                <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 h-13 px-8 text-base font-semibold backdrop-blur-sm" asChild>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white/25 bg-white/5 text-white hover:bg-white/15 hover:text-white h-13 px-8 text-base font-semibold"
+                  asChild
+                >
                   <a href="#how-it-works" id="hero-cta-learn">How it works</a>
                 </Button>
               </div>
@@ -146,7 +147,7 @@ export default function Home() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4">
                     <p className="text-white/70 text-xs mb-1">Featured Property</p>
-                    <p className="text-white font-bold text-lg" style={{ fontFamily: 'Inter, sans-serif' }}>Highland Tower · Boston, MA</p>
+                    <p className="text-white font-bold text-lg">Highland Tower · Boston, MA</p>
                   </div>
                 </div>
                 {/* Stats overlay */}
@@ -167,7 +168,7 @@ export default function Home() {
               </div>
 
               {/* Floating badge */}
-              <div className="absolute -top-4 -right-4 glass rounded-xl px-4 py-3 shadow-xl" style={{ background: 'oklch(1 0 0 / 10%)', backdropFilter: 'blur(20px)', border: '1px solid oklch(1 0 0 / 15%)' }}>
+              <div className="absolute -top-4 -right-4 glass rounded-xl px-4 py-3 shadow-xl">
                 <p className="text-white/70 text-[10px]">Monthly distribution</p>
                 <p className="text-white font-bold text-base">+$26,300 <span className="text-emerald-400 text-xs">↑ 4.2%</span></p>
               </div>
@@ -176,7 +177,7 @@ export default function Home() {
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/30 animate-bounce">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/30">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -189,7 +190,7 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map(stat => (
               <div key={stat.label} className="text-center">
-                <p className="text-3xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'Inter, sans-serif' }}>{stat.value}</p>
+                <p className="text-3xl font-bold text-gray-900 mb-1 lofty-stat">{stat.value}</p>
                 <p className="text-sm text-gray-500">{stat.label}</p>
               </div>
             ))}
@@ -203,7 +204,7 @@ export default function Home() {
           <div className="flex items-end justify-between mb-10">
             <div>
               <p className="text-violet-600 text-sm font-semibold mb-2 tracking-wide uppercase">Featured</p>
-              <h2 className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>Currently Funding</h2>
+              <h2 className="text-3xl font-bold text-gray-900">Currently Funding</h2>
               <p className="text-gray-500 mt-2">Vetted deals open for investment right now.</p>
             </div>
             <Button variant="outline" className="hidden sm:flex border-violet-200 text-violet-700 hover:bg-violet-50" asChild>
@@ -226,30 +227,28 @@ export default function Home() {
       </section>
 
       {/* ===== HOW IT WORKS ===== */}
-      <section className="py-20 bg-white" id="how-it-works">
+      <section className="py-24 bg-white" id="how-it-works">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <p className="text-violet-600 text-sm font-semibold mb-2 tracking-wide uppercase">Simple process</p>
-            <h2 className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>Start earning in minutes</h2>
-            <p className="text-gray-500 mt-3 max-w-md mx-auto">No complex paperwork. No minimums. Just straightforward real estate investing.</p>
+          <div className="max-w-2xl mb-14">
+            <p className="text-violet-600 text-sm font-semibold mb-2 tracking-wide uppercase">How Lofty works</p>
+            <h2 className="text-3xl font-bold text-gray-900">From sign-up to first distribution</h2>
+            <p className="text-gray-500 mt-3">Fund an account in minutes. Own fractions of real properties. Collect your share of the rent.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12 lg:gap-y-0">
             {steps.map((step, i) => (
-              <div key={step.title} className="relative group">
+              <div key={step.title} className="relative lg:pr-8">
                 {i < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-8 left-full w-full h-px border-t-2 border-dashed border-gray-200 z-0" style={{ width: 'calc(100% - 4rem)', transform: 'translateX(2rem)' }} />
+                  <div className="hidden lg:block absolute top-[26px] left-[3.5rem] right-0 h-px bg-gray-200" aria-hidden="true" />
                 )}
-                <div className="relative z-10 flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-2xl gradient-brand flex items-center justify-center text-white mb-5 shadow-lg shadow-violet-500/20 group-hover:scale-110 group-hover:shadow-violet-500/35 transition-all duration-300">
-                    {step.icon}
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-400">
-                    {i + 1}
-                  </div>
-                  <h3 className="font-bold text-gray-900 mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>{step.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{step.description}</p>
+                <div className="flex items-baseline gap-3 mb-4">
+                  <span className="text-4xl font-semibold text-gray-900 tabular-nums leading-none">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <span className="h-px flex-1 bg-gray-200" aria-hidden="true" />
                 </div>
+                <h3 className="font-semibold text-gray-900 mb-2 text-base">{step.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-[22ch]">{step.description}</p>
               </div>
             ))}
           </div>
@@ -259,9 +258,11 @@ export default function Home() {
       {/* ===== TESTIMONIALS ===== */}
       <section className="py-20 bg-gray-50 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <p className="text-violet-600 text-sm font-semibold mb-2 tracking-wide uppercase">Social proof</p>
-            <h2 className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>Trusted by 42,000+ investors</h2>
+          <div className="flex items-end justify-between mb-10 gap-6">
+            <div className="max-w-xl">
+              <p className="text-violet-600 text-sm font-semibold mb-2 tracking-wide uppercase">Investor stories</p>
+              <h2 className="text-3xl font-bold text-gray-900">Trusted by 42,000+ investors</h2>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -307,19 +308,17 @@ export default function Home() {
           backgroundImage: 'linear-gradient(oklch(0.9 0 0) 1px, transparent 1px), linear-gradient(90deg, oklch(0.9 0 0) 1px, transparent 1px)',
           backgroundSize: '48px 48px'
         }} />
-        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full opacity-20 blur-3xl" style={{ background: 'radial-gradient(circle, oklch(0.52 0.22 278), transparent)' }} />
-
         <div className="relative max-w-3xl mx-auto text-center px-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Ready to earn from real estate?
           </h2>
           <p className="text-white/60 text-lg mb-10 max-w-xl mx-auto">
             Join 42,000+ investors already earning passive income from premium real estate. Start with just $50.
           </p>
-          <Button size="lg" className="gradient-brand text-white border-0 h-14 px-10 text-base font-semibold shadow-2xl shadow-violet-500/40 hover:shadow-violet-500/60 hover:scale-[1.02] transition-all" asChild>
-            <Link href="/marketplace" id="bottom-cta-btn">Start Investing Today →</Link>
+          <Button size="lg" className="gradient-brand text-white border-0 h-14 px-10 text-base font-semibold shadow-xl hover:scale-[1.02] transition-transform" asChild>
+            <Link href="/marketplace" id="bottom-cta-btn">Start investing →</Link>
           </Button>
-          <p className="text-white/30 text-xs mt-4">No minimums. No hidden fees. Cancel anytime.</p>
+          <p className="text-white/30 text-xs mt-4">No minimums. No hidden fees. Sell your tokens anytime on the secondary market.</p>
         </div>
       </section>
 

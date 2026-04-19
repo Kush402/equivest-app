@@ -76,19 +76,22 @@ export default function Navbar() {
         </button>
         <Link
           href="/dashboard"
-          className="w-7 h-7 rounded-full flex-shrink-0 bg-gradient-to-br from-[#3C5BFF] to-[#16B47C] block"
+          className="w-7 h-7 rounded-full flex-shrink-0 bg-[var(--brand)] block"
           aria-label="Profile"
         />
       </div>
 
       {/* Mobile hamburger */}
       <button
-        className="md:hidden ml-auto"
+        className="md:hidden ml-auto w-11 h-11 inline-flex items-center justify-center -mr-2"
         onClick={() => setMobileOpen(!mobileOpen)}
         id="mobile-menu-btn"
+        aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+        aria-expanded={mobileOpen}
+        aria-controls="mobile-menu"
         style={{ color: 'var(--lofty-fg-2)' }}
       >
-        <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
           {mobileOpen
             ? <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round"/>
             : <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round"/>}
@@ -98,7 +101,8 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {mobileOpen && (
         <div
-          className="md:hidden absolute top-full left-0 right-0 py-2 space-y-1"
+          id="mobile-menu"
+          className="md:hidden absolute top-full left-0 right-0 py-1"
           style={{ background: 'var(--lofty-bg-surface)', borderBottom: '1px solid var(--lofty-border)' }}
         >
           {navItems.map((i) => (
@@ -106,7 +110,7 @@ export default function Navbar() {
               key={i.label}
               href={i.href}
               onClick={() => { setActive(i.label); setMobileOpen(false); }}
-              className="block px-5 py-2 text-sm"
+              className="flex items-center min-h-11 px-5 text-sm"
               style={{ color: 'var(--lofty-fg-2)' }}
             >
               {i.label}

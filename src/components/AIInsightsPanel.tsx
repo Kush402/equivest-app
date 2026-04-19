@@ -87,24 +87,12 @@ export default function AIInsightsPanel({ property }: AIInsightsPanelProps) {
   const insights = getInsights(property);
 
   return (
-    <div className="relative rounded-2xl overflow-hidden border border-violet-200/60 shadow-lg shadow-violet-500/10">
-      {/* Glow background */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'linear-gradient(135deg, oklch(0.97 0.02 278) 0%, oklch(0.99 0.01 240) 60%, oklch(0.97 0.02 300) 100%)',
-        }}
-      />
-      <div
-        className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-20 blur-3xl pointer-events-none"
-        style={{ background: 'radial-gradient(circle, oklch(0.65 0.2 278), transparent)' }}
-      />
-
+    <div className="relative rounded-2xl overflow-hidden border border-[var(--border)] bg-[var(--accent)] shadow-sm">
       <div className="relative">
         {/* Header */}
         <div className="px-5 pt-5 pb-4 border-b border-violet-100">
           <div className="flex items-center gap-2.5 mb-1">
-            <div className="w-7 h-7 rounded-lg gradient-brand flex items-center justify-center shadow-md shadow-violet-500/30">
+            <div className="w-7 h-7 rounded-lg gradient-brand flex items-center justify-center shadow-md">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -137,7 +125,7 @@ export default function AIInsightsPanel({ property }: AIInsightsPanelProps) {
           </div>
           <div>
             <p className="text-xs text-violet-500 font-medium mb-0.5">Lofty Score</p>
-            <p className="text-xl font-bold text-violet-900" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <p className="text-xl font-bold text-violet-900">
               {property.totalReturn >= 14 ? 'Excellent' : property.totalReturn >= 11 ? 'Strong' : 'Good'}
             </p>
             <p className="text-[10px] text-violet-400 mt-0.5">
@@ -157,7 +145,7 @@ export default function AIInsightsPanel({ property }: AIInsightsPanelProps) {
           {insights.map((insight, i) => {
             const s = typeStyles[insight.type];
             return (
-              <div key={i} className={`rounded-xl border ${s.border} p-3.5 bg-white/70 backdrop-blur-sm`}>
+              <div key={i} className={`rounded-xl border ${s.border} p-3.5 bg-[var(--card)]`}>
                 <div className="flex items-start gap-3">
                   <div className={`w-8 h-8 rounded-lg ${s.iconBg} flex items-center justify-center text-base flex-shrink-0`}>
                     {insight.icon}

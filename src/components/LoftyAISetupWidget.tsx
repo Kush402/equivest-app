@@ -177,7 +177,7 @@ export default function LoftyAISetupWidget({ onActivate }: Props) {
           </svg>
         </div>
         <div>
-          <p className="text-white font-bold text-[16px]" style={{ fontFamily: 'Syne, sans-serif' }}>Lofty AI Setup</p>
+          <p className="text-white font-bold text-[16px]">Lofty AI Setup</p>
           <p className="text-white/75 text-[12px]">Describe your workflow and I'll build your personalized dashboard</p>
         </div>
       </div>
@@ -210,7 +210,7 @@ export default function LoftyAISetupWidget({ onActivate }: Props) {
               <button
                 type="submit"
                 disabled={!input.trim()}
-                className="px-4 py-2.5 gradient-brand text-white font-semibold rounded-xl shadow-sm shadow-violet-400/25 hover:opacity-90 transition-opacity disabled:opacity-40"
+                className="px-4 py-2.5 gradient-brand text-white font-semibold rounded-xl shadow-sm hover:opacity-90 transition-opacity disabled:opacity-40"
               >
                 →
               </button>
@@ -224,7 +224,7 @@ export default function LoftyAISetupWidget({ onActivate }: Props) {
             {messages.map(msg =>
               msg.role === 'ai' ? (
                 <div key={msg.id} className="flex items-start gap-2.5">
-                  <div className="w-7 h-7 rounded-full gradient-brand flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm shadow-violet-400/30">
+                  <div className="w-7 h-7 rounded-full gradient-brand flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                     </svg>
@@ -235,7 +235,7 @@ export default function LoftyAISetupWidget({ onActivate }: Props) {
                 </div>
               ) : (
                 <div key={msg.id} className="flex justify-end">
-                  <div className="gradient-brand rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[75%] shadow-sm shadow-violet-400/20">
+                  <div className="gradient-brand rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[75%] shadow-sm">
                     <p className="text-[13px] text-white leading-relaxed">{msg.text}</p>
                   </div>
                 </div>
@@ -300,7 +300,7 @@ export default function LoftyAISetupWidget({ onActivate }: Props) {
             </div>
             <button
               onClick={() => onActivate(suggestedWidgets)}
-              className="w-full py-3 gradient-brand text-white font-semibold rounded-xl shadow-sm shadow-violet-400/25 hover:opacity-90 transition-opacity text-[14px]"
+              className="w-full py-3 gradient-brand text-white font-semibold rounded-xl shadow-sm hover:opacity-90 transition-opacity text-[14px]"
             >
               Activate My Dashboard ({suggestedWidgets.length} widgets) →
             </button>

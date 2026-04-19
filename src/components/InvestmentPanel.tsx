@@ -82,7 +82,7 @@ export default function InvestmentPanel({ property }: { property: Property }) {
         <div className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-10 blur-2xl" style={{ background: 'white', transform: 'translate(30%, -30%)' }} />
         <div className="relative">
           <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wider mb-1">Token Price</p>
-          <p className="text-white text-4xl font-bold leading-none" style={{ fontFamily: 'Inter, sans-serif' }}>
+          <p className="text-white text-4xl font-bold leading-none">
             {formatCurrency(property.tokenPrice)}
             <span className="text-white/50 text-base font-normal ml-1">/ token</span>
           </p>
@@ -140,7 +140,7 @@ export default function InvestmentPanel({ property }: { property: Property }) {
                 />
                 <button
                   onClick={() => handleTokenChange(tokens + 1)}
-                  className="w-10 h-10 rounded-xl gradient-brand text-white flex items-center justify-center font-bold shadow-md shadow-violet-500/25 transition-all hover:scale-105 text-lg"
+                  className="w-10 h-10 rounded-xl gradient-brand text-white flex items-center justify-center font-bold shadow-md transition-all hover:scale-105 text-lg"
                 >+</button>
               </div>
 
@@ -152,7 +152,7 @@ export default function InvestmentPanel({ property }: { property: Property }) {
                     onClick={() => handleTokenChange(n)}
                     className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
                       tokens === n
-                        ? 'gradient-brand text-white shadow-sm shadow-violet-500/20'
+                        ? 'gradient-brand text-white shadow-sm'
                         : 'bg-gray-100 text-gray-500 hover:bg-violet-50 hover:text-violet-600'
                     }`}
                   >
@@ -209,7 +209,7 @@ export default function InvestmentPanel({ property }: { property: Property }) {
 
             {/* ─── Total Return Preview ─── */}
             <div className="bg-violet-50 rounded-xl p-3 flex items-center gap-3 border border-violet-100">
-              <div className="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center flex-shrink-0 shadow-md shadow-violet-500/20">
+              <div className="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center flex-shrink-0 shadow-md">
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
@@ -227,7 +227,7 @@ export default function InvestmentPanel({ property }: { property: Property }) {
             <Button
               onClick={() => setInvested(true)}
               disabled={property.status === 'Coming Soon'}
-              className="w-full h-13 gradient-brand text-white border-0 font-bold text-sm shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-13 gradient-brand text-white border-0 font-bold text-sm shadow-md hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-[transform,box-shadow] duration-200 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {property.status === 'Coming Soon'
                 ? '🔔 Join Waitlist'
@@ -244,13 +244,13 @@ export default function InvestmentPanel({ property }: { property: Property }) {
         ) : (
           /* ─── Success State ─── */
           <div className="text-center py-3">
-            <div className="w-16 h-16 rounded-2xl gradient-brand flex items-center justify-center mx-auto mb-4 shadow-xl shadow-violet-500/35">
+            <div className="w-16 h-16 rounded-2xl gradient-brand flex items-center justify-center mx-auto mb-4 shadow-xl">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
             <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-1">Investment Confirmed</p>
-            <h3 className="font-bold text-gray-900 text-xl mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <h3 className="font-bold text-gray-900 text-xl mb-2">
               You&apos;re now an owner
             </h3>
             <p className="text-sm text-gray-500 mb-5 leading-relaxed">

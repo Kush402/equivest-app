@@ -43,8 +43,8 @@ function TypingDots() {
       {[0, 1, 2].map(i => (
         <span
           key={i}
-          className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce"
-          style={{ animationDelay: `${i * 0.15}s`, animationDuration: '0.8s' }}
+          className="w-1.5 h-1.5 rounded-full bg-violet-400 typing-dot"
+          style={{ animationDelay: `${i * 0.15}s` }}
         />
       ))}
     </span>
@@ -54,7 +54,7 @@ function TypingDots() {
 function AIBubble({ text, isTyping }: { text: string; isTyping?: boolean }) {
   return (
     <div className="flex items-start gap-2.5">
-      <div className="w-8 h-8 rounded-full gradient-brand flex items-center justify-center flex-shrink-0 shadow-sm shadow-violet-400/30">
+      <div className="w-8 h-8 rounded-full gradient-brand flex items-center justify-center flex-shrink-0 shadow-sm">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" fill="white" stroke="none"/>
         </svg>
@@ -71,7 +71,7 @@ function AIBubble({ text, isTyping }: { text: string; isTyping?: boolean }) {
 function UserBubble({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
-      <div className="max-w-[72%] gradient-brand rounded-2xl rounded-tr-sm px-4 py-3 shadow-sm shadow-violet-400/20">
+      <div className="max-w-[72%] gradient-brand rounded-2xl rounded-tr-sm px-4 py-3 shadow-sm">
         <p className="text-[14px] text-white leading-relaxed">{text}</p>
       </div>
     </div>
@@ -253,11 +253,11 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-[#f5f6f8] rounded-3xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden" style={{ maxHeight: '90vh' }}>
+      <div className="bg-[var(--lofty-bg-muted)] rounded-3xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden" style={{ maxHeight: '90vh' }}>
 
         {/* Header */}
         <div className="bg-white border-b border-gray-100 px-5 py-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center shadow-sm shadow-violet-400/30">
+          <div className="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center shadow-sm">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="white"/>
             </svg>
@@ -294,7 +294,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
           {/* Completing progress overlay in chat */}
           {step === 'completing' && (
             <div className="flex flex-col items-center gap-3 py-4">
-              <div className="w-16 h-16 rounded-2xl gradient-brand flex items-center justify-center shadow-lg shadow-violet-500/30 animate-pulse">
+              <div className="w-16 h-16 rounded-2xl gradient-brand flex items-center justify-center shadow-lg">
                 <svg width="28" height="28" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                 </svg>
@@ -319,7 +319,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
             {step === 'welcome' && (
               <button
                 onClick={handleWelcome}
-                className="w-full py-3 gradient-brand text-white font-semibold rounded-xl shadow-sm shadow-violet-400/25 hover:opacity-90 transition-opacity text-[14px]"
+                className="w-full py-3 gradient-brand text-white font-semibold rounded-xl shadow-sm hover:opacity-90 transition-opacity text-[14px]"
               >
                 Let&apos;s get started →
               </button>
@@ -336,7 +336,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2.5 gradient-brand text-white font-semibold rounded-xl shadow-sm shadow-violet-400/25 hover:opacity-90 transition-opacity text-[14px]"
+                  className="px-4 py-2.5 gradient-brand text-white font-semibold rounded-xl shadow-sm hover:opacity-90 transition-opacity text-[14px]"
                 >
                   →
                 </button>
@@ -418,7 +418,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                 ))}
                 <button
                   onClick={handleFeaturesConfirm}
-                  className="w-full mt-2 py-3 gradient-brand text-white font-semibold rounded-xl shadow-sm shadow-violet-400/25 hover:opacity-90 transition-opacity text-[14px]"
+                  className="w-full mt-2 py-3 gradient-brand text-white font-semibold rounded-xl shadow-sm hover:opacity-90 transition-opacity text-[14px]"
                 >
                   Build my dashboard →
                 </button>

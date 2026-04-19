@@ -45,10 +45,10 @@ export default function IncomeChart({ data }: IncomeChartProps) {
               <stop offset="95%" stopColor="oklch(0.58 0.2 200)" stopOpacity={0.01}/>
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-          <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
           <YAxis
-            tick={{ fontSize: 10, fill: '#94a3b8' }}
+            tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
             axisLine={false} tickLine={false}
             tickFormatter={v => `$${(v/1000).toFixed(0)}k`}
             width={38}

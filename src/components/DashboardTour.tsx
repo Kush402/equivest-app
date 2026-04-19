@@ -205,7 +205,7 @@ export default function DashboardTour({ onDone, initialWidgetId, onlyWidgetIds }
               <p className="text-[11px] font-bold text-violet-500 uppercase tracking-wider mb-0.5">
                 Step {stepIdx + 1} of {steps.length}
               </p>
-              <h3 className="text-[17px] font-bold text-gray-900 leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <h3 className="text-[17px] font-bold text-gray-900 leading-tight">
                 {step.title}
               </h3>
             </div>
@@ -239,8 +239,8 @@ export default function DashboardTour({ onDone, initialWidgetId, onlyWidgetIds }
                   {[0, 1, 2].map(i => (
                     <span
                       key={i}
-                      className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce"
-                      style={{ animationDelay: `${i * 0.15}s`, animationDuration: '0.8s' }}
+                      className="w-1.5 h-1.5 rounded-full bg-violet-400 typing-dot"
+                      style={{ animationDelay: `${i * 0.15}s` }}
                     />
                   ))}
                 </div>
@@ -310,7 +310,7 @@ export default function DashboardTour({ onDone, initialWidgetId, onlyWidgetIds }
           )}
           <button
             onClick={goNext}
-            className="px-4 py-1.5 text-[13px] font-semibold text-white rounded-lg gradient-brand shadow-sm shadow-violet-400/25 hover:opacity-90 transition-opacity"
+            className="px-4 py-1.5 text-[13px] font-semibold text-white rounded-lg gradient-brand shadow-sm hover:opacity-90 transition-opacity"
           >
             {stepIdx === steps.length - 1 ? 'Done ✓' : 'Next →'}
           </button>

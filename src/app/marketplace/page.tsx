@@ -9,12 +9,12 @@ import { Input } from '@/components/ui/input';
 const TYPES    = ['All', 'Multifamily', 'Commercial', 'Mixed-Use', 'Single Family'];
 const STATUSES = ['All', 'Funding', 'Funded', 'Coming Soon'];
 const SORT_OPTIONS = [
-  { value: 'yield-desc',   label: '⚡ Highest Yield'   },
-  { value: 'return-desc',  label: '📈 Highest Return'   },
-  { value: 'funded-desc',  label: '🔥 Most Funded'      },
-  { value: 'funded-asc',   label: '🌱 Least Funded'     },
-  { value: 'price-asc',    label: '💰 Price: Low → High' },
-  { value: 'price-desc',   label: '💎 Price: High → Low' },
+  { value: 'yield-desc',   label: 'Highest Yield'   },
+  { value: 'return-desc',  label: 'Highest Return'   },
+  { value: 'funded-desc',  label: 'Most Funded'      },
+  { value: 'funded-asc',   label: 'Least Funded'     },
+  { value: 'price-asc',    label: 'Price: Low to High' },
+  { value: 'price-desc',   label: 'Price: High to Low' },
 ];
 
 const STATS = [
@@ -67,23 +67,24 @@ export default function MarketplacePage() {
           backgroundImage: 'linear-gradient(oklch(0.9 0 0) 1px, transparent 1px), linear-gradient(90deg, oklch(0.9 0 0) 1px, transparent 1px)',
           backgroundSize: '48px 48px'
         }} />
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10 blur-3xl" style={{ background:'radial-gradient(circle, oklch(0.52 0.22 278), transparent)' }} />
-
         <div className="max-w-7xl mx-auto relative">
           <p className="text-violet-400 text-xs font-bold mb-2 tracking-widest uppercase">Marketplace</p>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
-            Browse Investment Properties
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
+            Browse investment properties
           </h1>
           <p className="text-white/40 max-w-xl mb-6 text-sm">
             {properties.length} properties. Start investing from $50 — no minimums, no lockups.
           </p>
 
           {/* Stats bar */}
-          <div className="flex flex-wrap gap-6 mb-6">
-            {STATS.map(s => (
-              <div key={s.label}>
-                <p className="text-white text-lg font-bold" style={{ fontFamily: 'Inter, sans-serif' }}>{s.value}</p>
-                <p className="text-white/40 text-[10px] font-medium">{s.label}</p>
+          <div className="flex flex-wrap items-center mb-8">
+            {STATS.map((s, i) => (
+              <div key={s.label} className="flex items-center">
+                {i > 0 && <span className="hidden sm:block w-px h-8 bg-white/10 mx-6" aria-hidden="true" />}
+                <div className="pr-6 sm:pr-0">
+                  <p className="text-white text-lg font-bold lofty-stat">{s.value}</p>
+                  <p className="text-white/40 text-[10px] font-medium uppercase tracking-wider">{s.label}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -98,7 +99,7 @@ export default function MarketplacePage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search by city, state, or property name…"
-              className="pl-10 h-12 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-violet-400 focus:bg-white/15 transition-all rounded-xl"
+              className="pl-10 h-12 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-violet-400 focus:bg-white/15 transition-[border-color,background-color] rounded-xl"
             />
           </div>
         </div>
@@ -118,9 +119,9 @@ export default function MarketplacePage() {
                     key={type}
                     id={`filter-type-${type.toLowerCase().replace(/\s/g, '-')}`}
                     onClick={() => setSelectedType(type)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
                       selectedType === type
-                        ? 'gradient-brand text-white shadow-sm shadow-violet-500/20'
+                        ? 'gradient-brand text-white shadow-sm'
                         : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                     }`}
                   >
@@ -139,9 +140,9 @@ export default function MarketplacePage() {
                     key={s}
                     id={`filter-status-${s.toLowerCase().replace(/\s/g, '-')}`}
                     onClick={() => setSelectedStatus(s)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
                       selectedStatus === s
-                        ? 'gradient-brand text-white shadow-sm shadow-violet-500/20'
+                        ? 'gradient-brand text-white shadow-sm'
                         : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                     }`}
                   >
