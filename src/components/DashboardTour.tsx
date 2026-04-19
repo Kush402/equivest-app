@@ -9,17 +9,15 @@ export interface TourStep {
 }
 
 export const ALL_TOUR_STEPS: TourStep[] = [
-  { widgetId: 'portfolio-stats',       title: 'Portfolio Overview',            description: 'Your total investment snapshot — value, earnings, and monthly income all in one card.' },
-  { widgetId: 'new-updates',           title: 'New Updates & Announcements',   description: 'Platform news, new property launches, distribution announcements, and sponsored listings.' },
-  { widgetId: 'today-new-investments', title: "Today's New Investments",        description: 'Your active token holdings with quick access to each property\'s yield and performance.' },
-  { widgetId: 'todays-opportunities',  title: "Today's Opportunities",          description: 'AI-surfaced high-yield and top-gaining properties matched to your investment profile.' },
-  { widgetId: 'transactions',          title: 'Transactions',                   description: 'A full log of rental income distributions and token purchases for your records.' },
-  { widgetId: 'todays-tasks',          title: "Today's Tasks",                  description: 'Quick-action shortcuts: invest, withdraw earnings, browse properties, or refer friends.' },
-  { widgetId: 'my-listings',           title: 'My Holdings',                    description: 'Every tokenized property you own, with current valuation and token count at a glance.' },
-  { widgetId: 'market-pulse',          title: 'Market Pulse',                   description: 'Live platform metrics — new listings, average yields, total AUM, and trending cities.' },
-  { widgetId: 'ai-recommendations',    title: 'AI Recommendations',             description: 'Personalized property picks generated from your portfolio, goals, and investment history.' },
-  { widgetId: 'portfolio-performance', title: 'Portfolio Performance',          description: '12-month chart plotting your portfolio value, invested capital baseline, and ROI trend.' },
-  { widgetId: 'asset-allocation',      title: 'Asset Allocation',               description: 'Donut chart showing how your capital is spread across each property by percentage.' },
+  { widgetId: 'pipeline-overview',  title: 'Pipeline Overview',          description: 'See your entire lead pipeline at a glance — new leads, contacted, nurturing, and under contract.' },
+  { widgetId: 'new-updates',        title: 'New Updates & Announcements', description: 'Platform news, agent tips, MLS refresh alerts, and Lofty AI feature announcements.' },
+  { widgetId: 'lead-activity',      title: 'Lead Activity Feed',          description: 'Real-time feed of lead actions — listing views, form submissions, email opens, and saved favorites.' },
+  { widgetId: 'ai-lead-scoring',    title: 'AI Lead Scoring',             description: 'AI-ranked priority leads based on engagement signals and buying intent — know who to call first.' },
+  { widgetId: 'need-keep-in-touch', title: 'Need Keep In Touch',          description: 'Contacts overdue for follow-up with last-contact dates so no lead goes cold.' },
+  { widgetId: 'todays-tasks',       title: "Today's Tasks",               description: 'Quick-action shortcuts: follow up with leads, send listings, schedule showings, or refer clients.' },
+  { widgetId: 'appointments',       title: 'Appointments',                description: 'AI-optimized showing schedules and proactive lead outreach grouped by route.' },
+  { widgetId: 'my-listings-crm',    title: 'My Listings',                 description: 'Your active MLS listings with views, inquiries, and days on market tracked in one card.' },
+  { widgetId: 'hot-sheets',         title: 'Hot Sheets',                  description: 'Market-wide: new listings, price reductions, upcoming open houses, back on market, and expired.' },
 ];
 
 const TOOLTIP_W = 400;

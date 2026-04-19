@@ -1,158 +1,121 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/properties';
-import { generatePortfolioHistory } from '@/lib/mockChartData';
-import { EarningsChartClient as EarningsChart, AllocationChartClient as AllocationChart } from '@/components/charts/DashboardChartClients';
 import { useOnboardingComplete, type OnboardingProfile } from '@/components/OnboardingModal';
 import DashboardTour from '@/components/DashboardTour';
 import LoftyAISetupWidget from '@/components/LoftyAISetupWidget';
 import LeadChatWidget from '@/components/LeadChatWidget';
-import AIPortfolioChatPanel from '@/components/AIPortfolioChatPanel';
 import LeadOutreachChatWindow from '@/components/LeadOutreachChatWindow';
 
 const WIDGETS_KEY  = 'lofty_widgets_v1';
 const TOUR_DONE_KEY = 'lofty_tour_complete_v1';
 
 type WidgetId =
-  | 'portfolio-stats'
+  | 'pipeline-overview'
   | 'new-updates'
-  | 'today-new-investments'
-  | 'todays-opportunities'
+  | 'lead-activity'
+  | 'ai-lead-scoring'
   | 'need-keep-in-touch'
-  | 'transactions'
+  | 'my-listings-crm'
   | 'todays-tasks'
   | 'appointments'
-  | 'my-listings'
-  | 'hot-sheets'
-  | 'market-pulse'
-  | 'ai-recommendations'
-  | 'ai-portfolio-chat';
+  | 'hot-sheets';
 
 const WIDGET_META: Record<WidgetId, { title: string; description: string }> = {
-  'portfolio-stats':        { title: 'Portfolio Overview',        description: 'Total invested, current value, earnings, and monthly income at a glance' },
-  'new-updates':            { title: 'New Updates',               description: 'Platform news, announcements, and sponsored listings' },
-  'today-new-investments':  { title: "Today's New Investments",   description: 'Your holdings and recent token purchases' },
-  'todays-opportunities':   { title: "Today's Opportunities",     description: 'High-yield and top-gaining properties' },
-  'need-keep-in-touch':     { title: 'Need Keep In Touch',        description: 'Upcoming distributions and follow-up reminders' },
-  'transactions':           { title: 'Transactions',              description: 'Recent purchases and rental income activity' },
-  'todays-tasks':           { title: "Today's Tasks",             description: 'Quick actions: invest, withdraw, browse, refer' },
-  'appointments':           { title: 'Appointments',              description: 'AI-optimized showing schedules and proactive lead outreach.' },
-  'my-listings':            { title: 'My Holdings',               description: 'All your tokenized property investments' },
-  'hot-sheets':             { title: 'Hot Sheets',                description: 'Market-wide: new listings, price reductions, high yields' },
-  'market-pulse':           { title: 'Market Pulse',              description: 'Live platform metrics: listings, average yield, AUM, trending cities' },
-  'ai-recommendations':     { title: 'AI Recommendations',        description: 'Personalized property picks based on your portfolio and goals' },
-  'ai-portfolio-chat':      { title: 'Ask My Portfolio',          description: 'Chat with an AI that knows your holdings, yield, and distribution history' },
+  'pipeline-overview':  { title: 'Pipeline Overview',     description: 'Lead pipeline stages: new leads, contacted, nurturing, under contract' },
+  'new-updates':        { title: 'New Updates',           description: 'Platform news, announcements, and agent tips' },
+  'lead-activity':      { title: 'Lead Activity Feed',    description: 'Real-time feed of lead actions: views, form fills, email opens' },
+  'ai-lead-scoring':    { title: 'AI Lead Scoring',       description: 'AI-ranked priority leads based on engagement and intent signals' },
+  'need-keep-in-touch': { title: 'Need Keep In Touch',    description: 'Contacts overdue for follow-up with last-contact dates' },
+  'my-listings-crm':    { title: 'My Listings',           description: 'Your active MLS listings with views, inquiries, and days on market' },
+  'todays-tasks':       { title: "Today's Tasks",         description: 'Quick actions: follow up, send listing, schedule showing, refer' },
+  'appointments':       { title: 'Appointments',          description: 'AI-optimized showing schedules and proactive lead outreach' },
+  'hot-sheets':         { title: 'Hot Sheets',            description: 'Market-wide: new listings, price reductions, open houses, expired' },
 };
 
 const ALWAYS_ON: WidgetId[] = [
-  'portfolio-stats', 'new-updates', 'transactions', 'my-listings',
-  'todays-tasks', 'market-pulse', 'ai-recommendations', 'ai-portfolio-chat',
+  'pipeline-overview', 'new-updates', 'lead-activity', 'my-listings-crm',
+  'todays-tasks', 'hot-sheets', 'ai-lead-scoring',
 ];
 
 function deriveDefaultWidgets(profile: OnboardingProfile | null): WidgetId[] {
   const ids = new Set<WidgetId>(ALWAYS_ON);
   if (!profile) return [...ids];
 
-  ids.add('today-new-investments');
-
   if (['close-more-deals', 'manage-leads'].includes(profile.primaryGoal)) {
-    ids.add('todays-opportunities');
-    ids.add('hot-sheets');
+    ids.add('need-keep-in-touch');
+    ids.add('ai-lead-scoring');
   }
   if (['grow-team', 'scale-business', 'better-marketing'].includes(profile.primaryGoal)) {
-    ids.add('todays-opportunities');
-    ids.add('hot-sheets');
     ids.add('need-keep-in-touch');
+    ids.add('lead-activity');
   }
   if (profile.wantsShowingScheduler) ids.add('appointments');
   if (profile.wantsAIInsights) {
-    ids.add('todays-opportunities');
+    ids.add('ai-lead-scoring');
     ids.add('need-keep-in-touch');
-    ids.add('ai-portfolio-chat');
   }
-  if (profile.wantsLeadScoring) ids.add('todays-opportunities');
+  if (profile.wantsLeadScoring) ids.add('ai-lead-scoring');
 
   return [...ids];
 }
 
-const holdings = [
-  {
-    id: 'highland-tower',
-    name: 'Highland Tower',
-    city: 'Boston, MA',
-    image: '/images/prop1.png',
-    tokens: 24,
-    tokenPrice: 50,
-    invested: 1200,
-    currentValue: 1318,
-    yield: 7.4,
-    monthlyIncome: 7.40,
-    totalEarned: 74.8,
-    change: 9.8,
-    type: 'Multifamily',
-  },
-  {
-    id: 'azure-bay-residences',
-    name: 'Azure Bay Residences',
-    city: 'Miami, FL',
-    image: '/images/prop2.png',
-    tokens: 40,
-    tokenPrice: 50,
-    invested: 2000,
-    currentValue: 2290,
-    yield: 6.8,
-    monthlyIncome: 11.34,
-    totalEarned: 110.4,
-    change: 14.5,
-    type: 'Multifamily',
-  },
-  {
-    id: 'centrepoint-plaza',
-    name: 'Centrepoint Plaza',
-    city: 'Chicago, IL',
-    image: '/images/prop3.png',
-    tokens: 16,
-    tokenPrice: 50,
-    invested: 800,
-    currentValue: 880,
-    yield: 8.1,
-    monthlyIncome: 5.40,
-    totalEarned: 43.2,
-    change: 10.0,
-    type: 'Mixed-Use',
-  },
+const pipeline = [
+  { stage: 'New Leads',      count: 14, color: 'text-violet-600', bg: 'bg-violet-50'  },
+  { stage: 'Contacted',      count: 31, color: 'text-sky-600',    bg: 'bg-sky-50'     },
+  { stage: 'Nurturing',      count: 18, color: 'text-amber-600',  bg: 'bg-amber-50'   },
+  { stage: 'Under Contract', count: 5,  color: 'text-emerald-600',bg: 'bg-emerald-50' },
+];
+const closedThisMonth = 3;
+
+const leadActivity = [
+  { lead: 'Sarah Jenkins',   action: 'Viewed listing 4×',           property: '4821 E Camelback Rd', time: '2m ago',  intent: 'Hot'  },
+  { lead: 'Marcus Chen',     action: 'Submitted contact form',       property: '5102 E Camelback Rd', time: '18m ago', intent: 'Hot'  },
+  { lead: 'David Torres',    action: 'Opened email campaign',        property: '3850 E Camelback Rd', time: '1h ago',  intent: 'Warm' },
+  { lead: 'Priya Kapoor',    action: 'Saved listing to favorites',   property: '1900 W Bell Rd',      time: '2h ago',  intent: 'Warm' },
+  { lead: 'James Patterson', action: 'Revisited price-reduced page', property: '7201 N Scottsdale Rd',time: '4h ago',  intent: 'Cold' },
 ];
 
-const activity = [
-  { type: 'distribution', label: 'Rental Income — Azure Bay Residences',    amount: '+$11.34', date: 'Apr 15' },
-  { type: 'distribution', label: 'Rental Income — Highland Tower',           amount: '+$7.40',  date: 'Apr 15' },
-  { type: 'distribution', label: 'Rental Income — Centrepoint Plaza',        amount: '+$5.40',  date: 'Apr 15' },
-  { type: 'purchase',     label: 'Purchased 16 tokens — Centrepoint Plaza',  amount: '-$800',   date: 'Mar 2'  },
-  { type: 'purchase',     label: 'Purchased 40 tokens — Azure Bay',          amount: '-$2,000', date: 'Jan 14' },
-  { type: 'purchase',     label: 'Purchased 24 tokens — Highland Tower',     amount: '-$1,200', date: 'Nov 1'  },
+const priorityLeads = [
+  { name: 'Sarah Jenkins',       score: 94, intent: 'Hot',  signals: 'Viewed 4× in 24h · Pre-approved $500K', lastContact: '2 days ago' },
+  { name: 'Marcus Chen',         score: 87, intent: 'Hot',  signals: 'Submitted form · Called office',         lastContact: 'Today'      },
+  { name: 'David & Emma Torres', score: 71, intent: 'Warm', signals: 'Lease ending in 3 weeks · Pre-approved', lastContact: '5 days ago' },
+  { name: 'Priya Kapoor',        score: 58, intent: 'Warm', signals: 'Multiple saves · Budget match',          lastContact: '1 week ago' },
+];
+
+const touchLeads = [
+  { name: 'Robert Kim',   lastContact: '12 days ago', type: 'Seller Lead', note: 'Requested CMA'      },
+  { name: 'Lisa Nguyen',  lastContact: '8 days ago',  type: 'Buyer Lead',  note: 'Needs 3BD Phoenix'  },
+  { name: 'Carlos Reyes', lastContact: '6 days ago',  type: 'Past Client', note: 'Referred 2 friends' },
+];
+
+const myListings = [
+  { id: 'prop1', address: '4821 E Camelback Rd', city: 'Phoenix, AZ', price: 485000, beds: 3, baths: 2, dom: 8,  views: 214, inquiries: 7, image: '/images/prop1.png' },
+  { id: 'prop2', address: '5102 E Camelback Rd', city: 'Phoenix, AZ', price: 620000, beds: 4, baths: 3, dom: 15, views: 189, inquiries: 4, image: '/images/prop2.png' },
+  { id: 'prop3', address: '3850 E Camelback Rd', city: 'Phoenix, AZ', price: 395000, beds: 2, baths: 2, dom: 3,  views: 87,  inquiries: 2, image: '/images/prop3.png' },
 ];
 
 const hotSheets = [
   { label: 'New Listings',        count: '27,309 Listings', updates: '4,677 Updates' },
   { label: 'Price Reduced',       count: '43,952 Listings', updates: '2,766 Updates' },
   { label: 'Upcoming Open House', count: '7,437 Listings',  updates: '1,981 Updates' },
-  { label: 'High Yield (7%+)',    count: '6,332 Listings',  updates: '1,690 Updates' },
-  { label: 'Newly Tokenized',     count: '3,527 Listings',  updates: '918 Updates'   },
-  { label: 'Back on Market',      count: '0 Listing',       updates: ''              },
+  { label: 'Back on Market',      count: '3,218 Listings',  updates: '891 Updates'   },
+  { label: 'Coming Soon',         count: '2,109 Listings',  updates: '437 Updates'   },
+  { label: 'Expired',             count: '1,844 Listings',  updates: ''              },
 ];
 
 const announcements = [
-  { title: 'Q2 Distribution Scheduled',   body: 'Rental income payouts post May 15. Review your breakdown.' },
-  { title: 'New Property Live',           body: 'Marina View Lofts (San Diego) is now open for investment.' },
+  { title: 'Lofty AI Webinar — May 1',  body: 'Join us live to see the new AI Lead Scorer and Smart Route in action.' },
+  { title: 'MLS Data Refresh — Apr 20', body: 'Lofty syncs MLS data every 15 minutes. Hot sheets now update in real-time.' },
 ];
 
 const newUpdates = [
-  { title: 'Lofty Real Estate Service', tag: 'Sponsored',
-    body: '🏡 NEW LISTING — NOW AVAILABLE! Be the first to invest in 1133 W 9th St, Cleveland, OH.' },
+  { title: 'Lofty AI Feature Update', tag: 'Product',
+    body: '✨ NEW — AI Smart Route now supports bulk outreach to all showing leads simultaneously.' },
 ];
 
 const aiClusteredShowings = [
@@ -185,20 +148,6 @@ const aiClusteredShowings = [
   },
 ];
 
-const totalInvested = holdings.reduce((a, h) => a + h.invested, 0);
-const totalValue    = holdings.reduce((a, h) => a + h.currentValue, 0);
-const totalEarned   = holdings.reduce((a, h) => a + h.totalEarned, 0);
-const totalMonthly  = holdings.reduce((a, h) => a + h.monthlyIncome, 0);
-const totalGain     = totalValue - totalInvested;
-const gainPct       = ((totalGain / totalInvested) * 100).toFixed(1);
-
-const ALLOCATION_SLICES = [
-  { name: 'Azure Bay',       value: 51, amount: holdings[1].currentValue, color: 'oklch(0.52 0.22 278)' },
-  { name: 'Highland Tower',  value: 29, amount: holdings[0].currentValue, color: 'oklch(0.65 0.18 148)' },
-  { name: 'Centrepoint',     value: 20, amount: holdings[2].currentValue, color: 'oklch(0.65 0.2 45)'   },
-];
-
-type WithdrawStep = 'idle' | 'selecting' | 'confirm' | 'done';
 
 /* Lofty-style empty state illustration (re-used across cards) */
 function EmptyIllustration({ label = 'Nothing on your to-do list yet — Enjoy your day!' }: { label?: string }) {
@@ -244,13 +193,10 @@ function CardToolIcons({ showGear = false }: { showGear?: boolean }) {
 export default function DashboardPage() {
   const [updatesTab, setUpdatesTab] = useState<'new' | 'announcements'>('new');
   const [eventsTab,  setEventsTab]  = useState<'appointments' | 'showings'>('appointments');
-  const [withdrawStep, setWithdrawStep] = useState<WithdrawStep>('idle');
-  const [withdrawAmount, setWithdrawAmount] = useState(totalMonthly.toFixed(2));
   const [showRouteModal, setShowRouteModal] = useState(false);
   const [routeGenerating, setRouteGenerating] = useState(false);
   const [outreachSent, setOutreachSent] = useState(false);
   const [openOutreachChats, setOpenOutreachChats] = useState<typeof aiClusteredShowings>([]);
-  const portfolioHistory = useMemo(() => generatePortfolioHistory(12), []);
   const { isComplete, setIsComplete, profile, setProfile } = useOnboardingComplete();
   const [agentName, setAgentName] = useState('Alex');
   const [visibleWidgets, setVisibleWidgets] = useState<Set<WidgetId>>(new Set());
@@ -352,8 +298,6 @@ export default function DashboardPage() {
 
   const show = (id: WidgetId) => visibleWidgets.has(id);
 
-  const hasHoldings = holdings.length > 0;
-
   return (
     <main className="min-h-screen bg-[var(--lofty-bg-muted)] pt-16">
 
@@ -382,7 +326,7 @@ export default function DashboardPage() {
           </h1>
           <span className="h-5 w-px bg-gray-300" />
           <button className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 font-medium">
-            My Portfolio
+            My Pipeline
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -431,78 +375,6 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
-
-      {/* ─── Withdraw Flow (preserved functionality) ─── */}
-      {withdrawStep !== 'idle' && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setWithdrawStep('idle')}>
-          <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
-            {withdrawStep === 'selecting' && (
-              <>
-                <h3 className="font-bold text-xl text-gray-900 mb-1">Withdraw Earnings</h3>
-                <p className="text-xs text-gray-400 mb-5">Available balance: <span className="font-bold text-gray-700">{formatCurrency(parseFloat(totalEarned.toFixed(2)))}</span></p>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Amount (USD)</label>
-                <input
-                  type="number"
-                  value={withdrawAmount}
-                  onChange={e => setWithdrawAmount(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-xl font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500/40 mb-4"
-                />
-                <div className="flex gap-2 mb-4">
-                  {['25%', '50%', '75%', '100%'].map(p => {
-                    const pct = parseInt(p) / 100;
-                    return (
-                      <button key={p} onClick={() => setWithdrawAmount((totalEarned * pct).toFixed(2))}
-                        className="flex-1 py-1.5 rounded-lg text-xs font-bold bg-gray-100 hover:bg-violet-100 hover:text-violet-700 transition-colors text-gray-600">
-                        {p}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-gray-400 mb-4">Funds arrive in 1–3 business days via ACH transfer.</p>
-                <div className="flex gap-3">
-                  <Button variant="outline" className="flex-1" onClick={() => setWithdrawStep('idle')}>Cancel</Button>
-                  <Button className="flex-1 gradient-brand text-white border-0 shadow-md" onClick={() => setWithdrawStep('confirm')}>Review →</Button>
-                </div>
-              </>
-            )}
-
-            {withdrawStep === 'confirm' && (
-              <>
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <h3 className="font-bold text-xl text-gray-900 mb-1">Confirm Withdrawal</h3>
-                <p className="text-xs text-gray-400 mb-5">Review the details below before submitting.</p>
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3 mb-5">
-                  <div className="flex justify-between text-sm"><span className="text-gray-500">Amount</span><span className="font-bold">${withdrawAmount}</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-gray-500">Method</span><span className="font-bold">ACH · Chase ••••4821</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-gray-500">Arrival</span><span className="font-bold">1–3 business days</span></div>
-                  <div className="flex justify-between text-sm border-t border-gray-200 pt-2"><span className="text-gray-500">Fee</span><span className="font-bold text-emerald-600">$0.00</span></div>
-                </div>
-                <div className="flex gap-3">
-                  <Button variant="outline" className="flex-1" onClick={() => setWithdrawStep('selecting')}>← Back</Button>
-                  <Button className="flex-1 gradient-brand text-white border-0 shadow-md" onClick={() => setWithdrawStep('done')}>Confirm withdrawal</Button>
-                </div>
-              </>
-            )}
-
-            {withdrawStep === 'done' && (
-              <div className="text-center py-2">
-                <div className="w-16 h-16 rounded-2xl gradient-brand flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <h3 className="font-bold text-xl text-gray-900 mb-2">Withdrawal Submitted!</h3>
-                <p className="text-sm text-gray-500 mb-5">${withdrawAmount} will arrive in 1–3 business days to your Chase account ending in 4821.</p>
-                <Button className="w-full gradient-brand text-white border-0" onClick={() => setWithdrawStep('idle')}>Back to dashboard</Button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* ─── AI Smart Route Modal ─── */}
       {showRouteModal && (
@@ -683,35 +555,30 @@ export default function DashboardPage() {
           <LoftyAISetupWidget onActivate={handleActivateWidgets} />
         )}
 
-        {/* Widget: Portfolio Stats */}
-        {show('portfolio-stats') && (
-          <section data-widget-id="portfolio-stats" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[180px]">
+        {/* Widget: Pipeline Overview */}
+        {show('pipeline-overview') && (
+          <section data-widget-id="pipeline-overview" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[180px]">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[15px] font-semibold text-gray-900">Portfolio Overview</h2>
+              <h2 className="text-[15px] font-semibold text-gray-900">Pipeline Overview</h2>
               <div className="flex items-center gap-1.5 text-gray-300">
                 <CardToolIcons />
-                <button onClick={() => removeWidget('portfolio-stats')} className="hover:text-red-400" aria-label="Remove widget">
+                <button onClick={() => removeWidget('pipeline-overview')} className="hover:text-red-400" aria-label="Remove widget">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
                 </button>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 mb-4">
-              {[
-                { label: 'Total Invested',  value: formatCurrency(totalInvested), sub: 'across 3 properties', color: 'text-gray-900' },
-                { label: 'Current Value',   value: formatCurrency(totalValue),    sub: `+${gainPct}% gain`,   color: 'text-emerald-600' },
-                { label: 'Total Earned',    value: formatCurrency(totalEarned),   sub: 'cumulative income',   color: 'text-violet-600' },
-                { label: 'Monthly Income',  value: formatCurrency(totalMonthly),  sub: 'est. next payout',    color: 'text-sky-600' },
-              ].map(s => (
-                <div key={s.label} className="bg-[var(--lofty-bg-muted)] rounded-lg p-3">
-                  <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-1">{s.label}</p>
-                  <p className={`text-[18px] font-extrabold leading-none ${s.color}`}>{s.value}</p>
-                  <p className="text-[10px] text-gray-400 mt-1">{s.sub}</p>
+              {pipeline.map(s => (
+                <div key={s.stage} className={`${s.bg} rounded-lg p-3`}>
+                  <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-1">{s.stage}</p>
+                  <p className={`text-[24px] font-extrabold leading-none ${s.color}`}>{s.count}</p>
+                  <p className="text-[10px] text-gray-400 mt-1">leads</p>
                 </div>
               ))}
             </div>
             <div className="flex items-center justify-between text-[12px]">
-              <span className="text-gray-400">Total gain: <span className="font-bold text-emerald-600">+{formatCurrency(totalGain)}</span></span>
-              <Link href="/marketplace" className="font-semibold text-violet-600 hover:text-violet-800">+ Invest More</Link>
+              <span className="text-gray-400">Closed this month: <span className="font-bold text-emerald-600">{closedThisMonth} deals</span></span>
+              <Link href="#" className="font-semibold text-violet-600 hover:text-violet-800">View CRM →</Link>
             </div>
           </section>
         )}
@@ -787,11 +654,11 @@ export default function DashboardPage() {
                 </div>
               ))}
 
-              <Link href="/marketplace" className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group">
+              <Link href="#" className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group">
                 <div className="w-12 h-12 rounded-md bg-violet-50 flex items-center justify-center flex-shrink-0">
                   🚀
                 </div>
-                <p className="text-sm text-gray-700 group-hover:text-violet-700">Check Lofty&apos;s latest feature updates!</p>
+                <p className="text-sm text-gray-700 group-hover:text-violet-700">Check Lofty&apos;s latest AI feature updates!</p>
               </Link>
             </div>
           ) : (
@@ -806,85 +673,36 @@ export default function DashboardPage() {
           )}
         </section>}
 
-        {/* Widget: Today's New Investments */}
-        {show('today-new-investments') && <section data-widget-id="today-new-investments" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-[15px] font-semibold text-gray-900">Today&apos;s New Investments</h2>
-            <div className="flex items-center gap-1.5 text-gray-300">
-              <CardToolIcons showGear />
-              <button onClick={() => removeWidget('today-new-investments')} className="hover:text-red-400" aria-label="Remove widget">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
-              </button>
-            </div>
-          </div>
-          <div className="h-1 bg-gray-100 rounded-full overflow-hidden mb-3">
-            <div className="h-full gradient-brand rounded-full" style={{ width: hasHoldings ? '62%' : '0%' }} />
-          </div>
-          <p className="text-sm text-gray-700 mb-3">
-            Total: <span className="font-semibold">{holdings.length}</span> ({hasHoldings ? 0 : holdings.length} untouched)
-          </p>
-          {hasHoldings ? (
-            <div className="space-y-3">
-              {holdings.slice(0, 3).map(h => (
-                <Link href={`/properties/${h.id}`} key={h.id} className="flex items-center gap-3 py-1 group">
-                  <div className="relative w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
-                    <Image src={h.image} alt={h.name} fill sizes="40px" className="object-cover" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 group-hover:text-violet-700 transition-colors truncate">{h.name}</p>
-                    <p className="text-[11px] text-gray-400 truncate">Buyer · {h.city} · {h.yield}% yield</p>
-                  </div>
-                  <span className="inline-flex items-center justify-center min-w-[28px] h-5 px-1.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700">
-                    {h.tokens}
-                  </span>
-                </Link>
-              ))}
-              <Link href="/marketplace" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-2">View all →</Link>
-            </div>
-          ) : (
-            <EmptyIllustration />
-          )}
-        </section>}
-
-        {/* Widget: Today's Opportunities */}
-        {show('todays-opportunities') && <section data-widget-id="todays-opportunities" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {/* Widget: Lead Activity Feed */}
+        {show('lead-activity') && <section data-widget-id="lead-activity" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[15px] font-semibold text-gray-900">Today&apos;s Opportunities</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-[15px] font-semibold text-gray-900">Lead Activity Feed</h2>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            </div>
             <div className="flex items-center gap-1.5 text-gray-300">
               <CardToolIcons />
-              <button onClick={() => removeWidget('todays-opportunities')} className="hover:text-red-400" aria-label="Remove widget">
+              <button onClick={() => removeWidget('lead-activity')} className="hover:text-red-400" aria-label="Remove widget">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2 bg-[var(--lofty-bg-muted)] rounded-lg p-3 mb-4">
-            {[
-              { label: 'High Yield',   value: holdings.filter(h => h.yield >= 7).length },
-              { label: 'Top Gainers',  value: holdings.filter(h => h.change >= 10).length },
-              { label: 'Back to Site', value: Math.max(0, 12 - holdings.length) },
-            ].map(s => (
-              <div key={s.label} className="text-center">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide">{s.label}</p>
-                <p className="text-2xl font-extrabold text-gray-900 mt-1">{s.value}</p>
-              </div>
-            ))}
-          </div>
-          {hasHoldings ? (
-            <div className="space-y-2.5">
-              {holdings.map(h => (
-                <div key={h.id} className="flex items-center gap-2.5">
-                  <div className="w-2 h-2 rounded-full bg-violet-500" />
+          <div className="space-y-2.5">
+            {leadActivity.map((a, i) => {
+              const intentColor = a.intent === 'Hot' ? 'bg-red-500' : a.intent === 'Warm' ? 'bg-amber-400' : 'bg-gray-300';
+              return (
+                <div key={i} className="flex items-start gap-2.5 pb-2.5 border-b border-gray-50 last:border-0 last:pb-0">
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${intentColor}`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-gray-900 truncate">{h.name}</p>
-                    <p className="text-[10px] text-gray-400">Buyer · {h.type}</p>
+                    <p className="text-[13px] font-semibold text-gray-900 truncate">{a.lead}</p>
+                    <p className="text-[11px] text-gray-500 truncate">{a.action} · {a.property}</p>
                   </div>
-                  <p className="text-xs font-bold text-emerald-600">+{h.change}%</p>
+                  <span className="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">{a.time}</span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyIllustration />
-          )}
+              );
+            })}
+          </div>
+          <Link href="#" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View all activity →</Link>
         </section>}
 
         {/* Widget: Need Keep In Touch */}
@@ -900,55 +718,22 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-2 gap-2 bg-[var(--lofty-bg-muted)] rounded-lg p-3 mb-4">
             <div className="text-center">
-              <p className="text-[11px] text-gray-500">Distributions</p>
-              <p className="text-xl font-extrabold text-gray-900 mt-0.5">{holdings.length}</p>
+              <p className="text-[11px] text-gray-500">Overdue</p>
+              <p className="text-xl font-extrabold text-red-500 mt-0.5">{touchLeads.length}</p>
             </div>
             <div className="text-center">
-              <p className="text-[11px] text-gray-500">Follow-Up</p>
-              <p className="text-xl font-extrabold text-gray-900 mt-0.5">{activity.length}</p>
+              <p className="text-[11px] text-gray-500">Due This Week</p>
+              <p className="text-xl font-extrabold text-amber-500 mt-0.5">7</p>
             </div>
           </div>
           <div className="space-y-3">
-            {holdings.map(h => (
-              <div key={h.id} className="pb-3 border-b border-gray-50 last:border-0 last:pb-0">
-                <p className="text-sm font-semibold text-gray-900">{h.name}</p>
-                <p className="text-[11px] text-gray-500">Buyer</p>
-                <p className="text-[11px] text-gray-500">Next distribution: May 15, 2026</p>
-              </div>
-            ))}
-          </div>
-          <Link href="#" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View all →</Link>
-        </section>}
-
-        {/* Widget: Transactions */}
-        {show('transactions') && <section data-widget-id="transactions" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[15px] font-semibold text-gray-900">Transactions</h2>
-            <div className="flex items-center gap-1.5 text-gray-300">
-              <CardToolIcons showGear />
-              <button onClick={() => removeWidget('transactions')} className="hover:text-red-400" aria-label="Remove widget">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 bg-[var(--lofty-bg-muted)] rounded-lg p-3 mb-4">
-            <div className="text-center">
-              <p className="text-[11px] text-gray-500">Near Deadline</p>
-              <p className="text-xl font-extrabold text-gray-900 mt-0.5">{activity.filter(a => a.type === 'distribution').length}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[11px] text-gray-500">Expired</p>
-              <p className="text-xl font-extrabold text-gray-900 mt-0.5">0</p>
-            </div>
-          </div>
-          <div className="space-y-3">
-            {activity.slice(0, 4).map((a, i) => (
-              <div key={i} className="flex items-center justify-between gap-2 pb-2 border-b border-gray-50 last:border-0">
-                <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-gray-900 truncate">{a.label}</p>
-                  <p className="text-[10px] text-gray-400">{a.date} · {a.type === 'distribution' ? 'Income' : 'Purchase'}</p>
+            {touchLeads.map(l => (
+              <div key={l.name} className="pb-3 border-b border-gray-50 last:border-0 last:pb-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-gray-900">{l.name}</p>
+                  <span className="text-[10px] text-red-500 font-semibold flex-shrink-0">{l.lastContact}</span>
                 </div>
-                <p className={`text-xs font-bold flex-shrink-0 ${a.type === 'distribution' ? 'text-emerald-600' : 'text-gray-700'}`}>{a.amount}</p>
+                <p className="text-[11px] text-gray-500">{l.type} · {l.note}</p>
               </div>
             ))}
           </div>
@@ -968,10 +753,10 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-4 gap-2 mb-4">
             {[
-              { label: 'Invest',   value: holdings.length, bg: 'bg-violet-50',   color: 'text-violet-700'  },
-              { label: 'Withdraw', value: 1,               bg: 'bg-sky-50',      color: 'text-sky-700'     },
-              { label: 'Browse',   value: 12,              bg: 'bg-emerald-50',  color: 'text-emerald-700' },
-              { label: 'Refer',    value: 0,               bg: 'bg-amber-50',    color: 'text-amber-700'   },
+              { label: 'Follow-Up', value: 8,  bg: 'bg-violet-50',  color: 'text-violet-700'  },
+              { label: 'Send List', value: 3,  bg: 'bg-sky-50',     color: 'text-sky-700'     },
+              { label: 'Showings',  value: 3,  bg: 'bg-emerald-50', color: 'text-emerald-700' },
+              { label: 'Refer',     value: 1,  bg: 'bg-amber-50',   color: 'text-amber-700'   },
             ].map(t => (
               <div key={t.label} className={`rounded-md ${t.bg} p-2.5 text-center`}>
                 <p className={`text-[10px] font-semibold ${t.color}`}>{t.label}</p>
@@ -980,22 +765,20 @@ export default function DashboardPage() {
             ))}
           </div>
           <div className="space-y-3">
-            <Link href="/marketplace" className="flex items-center justify-between py-2 border-b border-gray-50 hover:bg-gray-50/60 rounded px-1">
+            <div className="flex items-center justify-between py-2 border-b border-gray-50 hover:bg-gray-50/60 rounded px-1">
               <div>
-                <p className="text-[13px] font-semibold text-gray-900">Invest in Marina View Lofts</p>
-                <p className="text-[10px] text-gray-400">New listing · San Diego, CA</p>
+                <p className="text-[13px] font-semibold text-gray-900">Call Sarah Jenkins — Hot lead</p>
+                <p className="text-[10px] text-gray-400">Pre-approved $500K · Viewed 4× today</p>
               </div>
               <p className="text-[11px] font-semibold text-violet-600">Today</p>
-            </Link>
-            <button onClick={() => setWithdrawStep('selecting')} className="w-full flex items-center justify-between py-2 hover:bg-gray-50/60 rounded px-1">
-              <div className="text-left">
-                <p className="text-[13px] font-semibold text-gray-900">Withdraw Earnings</p>
-                <p className="text-[10px] text-gray-400">Available: {formatCurrency(totalEarned)}</p>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-gray-50 hover:bg-gray-50/60 rounded px-1">
+              <div>
+                <p className="text-[13px] font-semibold text-gray-900">Send listings to Marcus Chen</p>
+                <p className="text-[10px] text-gray-400">3BD under $600K · Phoenix area</p>
               </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300">
-                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+              <p className="text-[11px] font-semibold text-violet-600">Today</p>
+            </div>
           </div>
         </section>}
 
@@ -1034,8 +817,12 @@ export default function DashboardPage() {
           {eventsTab === 'appointments' ? (
             <div className="space-y-3">
               <div className="pb-3 border-b border-gray-50 last:border-0">
-                <p className="text-sm font-semibold text-gray-900">Next Distribution</p>
-                <p className="text-[11px] text-gray-500">May 15, 2026 · {formatCurrency(totalMonthly)} expected</p>
+                <p className="text-sm font-semibold text-gray-900">Buyer Consultation — David Torres</p>
+                <p className="text-[11px] text-gray-500">Today, 10:00 AM · Pre-approved buyer, lease ending soon</p>
+              </div>
+              <div className="pb-3 border-b border-gray-50 last:border-0">
+                <p className="text-sm font-semibold text-gray-900">Listing Presentation — Kim & Park</p>
+                <p className="text-[11px] text-gray-500">Tomorrow, 2:00 PM · Seller lead, requested CMA</p>
               </div>
             </div>
           ) : (
@@ -1092,41 +879,36 @@ export default function DashboardPage() {
           )}
         </section>}
 
-        {/* Widget: My Holdings */}
-        {show('my-listings') && <section data-widget-id="my-listings" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {/* Widget: My Listings */}
+        {show('my-listings-crm') && <section data-widget-id="my-listings-crm" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[15px] font-semibold text-gray-900">My Holdings</h2>
+            <h2 className="text-[15px] font-semibold text-gray-900">My Listings</h2>
             <div className="flex items-center gap-1.5 text-gray-300">
               <CardToolIcons />
-              <button onClick={() => removeWidget('my-listings')} className="hover:text-red-400" aria-label="Remove widget">
+              <button onClick={() => removeWidget('my-listings-crm')} className="hover:text-red-400" aria-label="Remove widget">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
               </button>
             </div>
           </div>
           <div className="space-y-3">
-            {holdings.map(h => (
-              <div key={h.id} className="flex items-center gap-3 group">
-                <Link href={`/properties/${h.id}`} className="relative w-14 h-14 rounded-md overflow-hidden flex-shrink-0">
-                  <Image src={h.image} alt={h.name} fill sizes="56px" className="object-cover group-hover:scale-105 transition-transform" />
-                </Link>
+            {myListings.map(l => (
+              <div key={l.id} className="flex items-center gap-3 group">
+                <div className="relative w-14 h-14 rounded-md overflow-hidden flex-shrink-0">
+                  <Image src={l.image} alt={l.address} fill sizes="56px" className="object-cover group-hover:scale-105 transition-transform" />
+                </div>
                 <div className="flex-1 min-w-0">
-                  <Link href={`/properties/${h.id}`} className="block text-[13px] font-semibold text-gray-900 hover:text-violet-700 truncate">
-                    {h.name}
-                  </Link>
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(h.city)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] text-gray-500 hover:text-violet-600 hover:underline truncate inline-block"
-                  >
-                    {h.city}
-                  </a>
-                  <p className="text-[11px] text-violet-600 mt-0.5">{h.tokens} tokens · {formatCurrency(h.currentValue)}</p>
+                  <p className="text-[13px] font-semibold text-gray-900 truncate">{l.address}</p>
+                  <p className="text-[11px] text-gray-500 truncate">{l.city} · {l.beds}bd/{l.baths}ba · {formatCurrency(l.price)}</p>
+                  <div className="flex items-center gap-3 mt-0.5 text-[10px] text-gray-400">
+                    <span className="text-sky-600 font-semibold">{l.views} views</span>
+                    <span>{l.inquiries} inquiries</span>
+                    <span>{l.dom} DOM</span>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-          <Link href="/marketplace" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View all →</Link>
+          <Link href="#" className="block text-center text-xs font-semibold text-violet-600 hover:text-violet-800 pt-3">View all →</Link>
         </section>}
 
         {/* Widget: Hot Sheets */}
@@ -1152,100 +934,45 @@ export default function DashboardPage() {
           </div>
         </section>}
 
-        {/* Widget: Market Pulse */}
-        {show('market-pulse') && (
-          <section data-widget-id="market-pulse" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[15px] font-semibold text-gray-900">Market Pulse</h2>
-              <div className="flex items-center gap-1.5 text-gray-300">
-                <CardToolIcons />
-                <button onClick={() => removeWidget('market-pulse')} className="hover:text-red-400" aria-label="Remove widget">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
-                </button>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2 bg-[var(--lofty-bg-muted)] rounded-lg p-3 mb-4">
-              {[
-                { label: 'New Listings',  value: '1,247',  sub: 'this week',       color: 'text-violet-600' },
-                { label: 'Avg. Yield',    value: '7.2%',   sub: 'platform-wide',   color: 'text-emerald-600' },
-                { label: 'Total AUM',     value: '$142M',  sub: 'managed on-chain', color: 'text-sky-600' },
-                { label: 'Tokenizations', value: '38',     sub: 'new this month',  color: 'text-amber-600' },
-              ].map(s => (
-                <div key={s.label} className="text-center">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide">{s.label}</p>
-                  <p className={`text-xl font-extrabold mt-0.5 ${s.color}`}>{s.value}</p>
-                  <p className="text-[10px] text-gray-400">{s.sub}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Trending Cities</p>
-            <div className="space-y-2">
-              {[
-                { city: 'Miami, FL',     yield: '8.1%', new: 214, color: 'bg-violet-500' },
-                { city: 'Austin, TX',    yield: '7.6%', new: 187, color: 'bg-emerald-500' },
-                { city: 'Boston, MA',    yield: '7.4%', new: 155, color: 'bg-sky-500' },
-              ].map(c => (
-                <div key={c.city} className="flex items-center gap-2.5">
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${c.color}`} />
-                  <div className="flex-1 flex items-center justify-between">
-                    <p className="text-[12px] font-semibold text-gray-900">{c.city}</p>
-                    <div className="flex items-center gap-3 text-[11px] text-gray-400">
-                      <span className="font-bold text-emerald-600">{c.yield}</span>
-                      <span>{c.new} new</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Widget: AI Recommendations */}
-        {show('ai-recommendations') && (
-          <section data-widget-id="ai-recommendations" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
+        {/* Widget: AI Lead Scoring */}
+        {show('ai-lead-scoring') && (
+          <section data-widget-id="ai-lead-scoring" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 min-h-[320px]">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
-                <h2 className="text-[15px] font-semibold text-gray-900">AI Recommendations</h2>
+                <h2 className="text-[15px] font-semibold text-gray-900">AI Lead Scoring</h2>
                 <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md gradient-brand text-white">AI</span>
               </div>
               <div className="flex items-center gap-1.5 text-gray-300">
                 <CardToolIcons />
-                <button onClick={() => removeWidget('ai-recommendations')} className="hover:text-red-400" aria-label="Remove widget">
+                <button onClick={() => removeWidget('ai-lead-scoring')} className="hover:text-red-400" aria-label="Remove widget">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/></svg>
                 </button>
               </div>
             </div>
-            <p className="text-[11px] text-gray-400 mb-3">Based on your 7%+ yield preference &amp; portfolio mix</p>
+            <p className="text-[11px] text-gray-400 mb-3">AI-ranked by engagement signals and buying intent</p>
             <div className="space-y-3">
-              {[
-                { id: 'azure-bay-residences', name: 'Marina View Lofts',   city: 'San Diego, CA', image: '/images/prop1.png', yield: 8.3, reason: 'Matches your coastal multifamily focus',         tag: 'High Yield' },
-                { id: 'highland-tower',        name: 'Riverside Commons',  city: 'Austin, TX',    image: '/images/prop2.png', yield: 7.9, reason: 'Diversifies your Midwest-heavy allocation',      tag: 'Trending'   },
-                { id: 'centrepoint-plaza',     name: 'Pinnacle Office Park', city: 'Nashville, TN', image: '/images/prop3.png', yield: 7.5, reason: 'Lower correlation to your existing holdings',   tag: 'Stable'     },
-              ].map(rec => (
-                <div key={rec.id} className="flex items-start gap-3 pb-2.5 border-b border-gray-50 last:border-0 last:pb-0">
-                  <div className="relative w-11 h-11 rounded-md overflow-hidden flex-shrink-0">
-                    <Image src={rec.image} alt={rec.name} fill sizes="44px" className="object-cover" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <p className="text-[13px] font-semibold text-gray-900 truncate">{rec.name}</p>
-                      <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-violet-100 text-violet-700 flex-shrink-0">{rec.tag}</span>
+              {priorityLeads.map(lead => {
+                const intentBg = lead.intent === 'Hot' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600';
+                const barColor = lead.intent === 'Hot' ? 'bg-red-500' : 'bg-amber-400';
+                return (
+                  <div key={lead.name} className="pb-2.5 border-b border-gray-50 last:border-0 last:pb-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className="text-[13px] font-semibold text-gray-900 truncate">{lead.name}</p>
+                      <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded flex-shrink-0 ${intentBg}`}>{lead.intent}</span>
                     </div>
-                    <p className="text-[10px] text-gray-400 truncate">{rec.city} · {rec.yield}% yield</p>
-                    <p className="text-[10px] text-violet-600 mt-0.5 italic truncate">{rec.reason}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${lead.score}%` }} />
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-600">{lead.score}</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 truncate">{lead.signals}</p>
+                    <p className="text-[10px] text-gray-400">Last contact: {lead.lastContact}</p>
                   </div>
-                  <Link href="/marketplace" className="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg gradient-brand text-white shadow-sm flex-shrink-0">
-                    Invest
-                  </Link>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
-        )}
-
-        {/* Widget: AI Portfolio Chat */}
-        {show('ai-portfolio-chat') && (
-          <AIPortfolioChatPanel onRemove={() => removeWidget('ai-portfolio-chat')} />
         )}
 
         {/* Widget: Add Card */}
@@ -1313,50 +1040,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ─── Performance + Allocation Row (Equivest specifics kept) ─── */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 grid lg:grid-cols-3 gap-4">
-
-        <section data-widget-id="portfolio-performance" className="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">Portfolio Performance · 12 mo</p>
-              <p className="text-2xl font-extrabold text-gray-900">{formatCurrency(totalValue)}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">ROI</p>
-              <p className="text-xl font-bold text-emerald-600">+{gainPct}%</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 text-[10px] text-gray-400 mb-3">
-            <span className="flex items-center gap-1"><span className="w-3 h-0.5 inline-block rounded-full bg-violet-600" /> Portfolio Value</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-0.5 inline-block rounded-full border-t-2 border-dashed border-gray-400" /> Invested</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-0.5 inline-block rounded-full bg-emerald-500" /> ROI %</span>
-          </div>
-          <EarningsChart data={portfolioHistory} />
-        </section>
-
-        <section data-widget-id="asset-allocation" className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[15px] font-semibold text-gray-900">Asset Allocation</h2>
-            <CardToolIcons />
-          </div>
-          <AllocationChart slices={ALLOCATION_SLICES} />
-          <div className="space-y-2 mt-3">
-            {ALLOCATION_SLICES.map(slice => (
-              <div key={slice.name} className="flex items-center gap-2.5">
-                <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: slice.color }} />
-                <div className="flex-1 flex justify-between text-xs">
-                  <span className="text-gray-600 font-medium">{slice.name}</span>
-                  <span className="font-bold text-gray-900">{formatCurrency(slice.amount)}</span>
-                </div>
-                <span className="text-[10px] text-gray-400 font-medium w-8 text-right">{slice.value}%</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      {/* ─── Lead Chat Widget (Marcus Rivera / Voice Agent) ─── */}
+      {/* ─── Lead Chat Widget ─── */}
       <LeadChatWidget />
 
       {/* ─── Outreach Chat Windows (per showing lead) ─── */}
@@ -1371,26 +1055,22 @@ export default function DashboardPage() {
         />
       ))}
 
-      {/* ─── Bottom CTA: Next Distribution (kept) ─── */}
+      {/* ─── Bottom CTA: Monthly Goal ─── */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="gradient-brand rounded-xl p-5 relative overflow-hidden flex flex-wrap items-center justify-between gap-4">
           <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 blur-2xl" style={{ background: 'white', transform: 'translate(20%, -20%)' }} />
           <div className="relative">
-            <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-1">Next Distribution</p>
+            <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-1">Close Rate Goal · April 2026</p>
             <p className="text-white text-2xl font-extrabold">
-              {formatCurrency(totalMonthly)} <span className="text-white/60 text-sm font-medium">· Est. May 15, 2026</span>
+              {closedThisMonth} of 5 deals closed <span className="text-white/60 text-sm font-medium">· {5 - closedThisMonth} remaining</span>
             </p>
           </div>
           <div className="relative flex items-center gap-3">
-            <Button
-              onClick={() => setWithdrawStep('selecting')}
-              variant="outline"
-              className="border-white/30 text-white hover:bg-white/10 bg-transparent"
-            >
-              Withdraw Funds
-            </Button>
-            <Link href="/marketplace" id="dashboard-invest-btn">
-              <Button className="bg-white text-violet-700 border-0 shadow-lg hover:scale-[1.02] transition-transform font-semibold">+ Invest More</Button>
+            <Link href="#">
+              <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 bg-transparent">View Pipeline</Button>
+            </Link>
+            <Link href="#">
+              <Button className="bg-white text-violet-700 border-0 shadow-lg hover:scale-[1.02] transition-transform font-semibold">+ Add Lead</Button>
             </Link>
           </div>
         </div>

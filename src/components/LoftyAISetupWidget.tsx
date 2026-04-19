@@ -6,91 +6,85 @@ type Stage = 'idle' | 'analyzing' | 'followup' | 'results';
 interface Msg { role: 'ai' | 'user'; text: string; id: string }
 
 const STARTERS = [
-  "I want to track my investment portfolio and find high-yield properties",
-  "I'm a real estate agent focused on managing leads and closing more deals",
-  "I need AI market insights and personalized property recommendations",
-  "I'm just getting started with real estate investing",
+  "I'm a solo agent focused on managing leads and closing more deals",
+  "I manage a team and need to track pipeline, showings, and follow-ups",
+  "I want AI to help me prioritize leads and automate outreach",
+  "I'm new to Lofty and want a simple CRM setup to get started",
 ];
 
 const WIDGET_META: Record<string, { icon: string; title: string; desc: string }> = {
-  'portfolio-stats':       { icon: '📊', title: 'Portfolio Overview',    desc: 'Total invested, value & monthly income' },
-  'new-updates':           { icon: '📢', title: 'New Updates',           desc: 'Platform news & announcements' },
-  'today-new-investments': { icon: '🏠', title: "Today's Investments",   desc: 'Your token holdings & performance' },
-  'todays-opportunities':  { icon: '💡', title: "Today's Opportunities", desc: 'High-yield & top-gaining properties' },
-  'need-keep-in-touch':    { icon: '📞', title: 'Keep In Touch',         desc: 'Follow-up reminders & contacts' },
-  'transactions':          { icon: '💳', title: 'Transactions',          desc: 'Purchase & income activity log' },
-  'todays-tasks':          { icon: '✅', title: "Today's Tasks",         desc: 'Quick actions: invest, withdraw, refer' },
-  'appointments':          { icon: '📅', title: 'Appointments',          desc: 'AI-optimized showing schedules' },
-  'my-listings':           { icon: '🏢', title: 'My Holdings',           desc: 'All your tokenized properties' },
-  'hot-sheets':            { icon: '🔥', title: 'Hot Sheets',            desc: 'New listings & price reductions' },
-  'market-pulse':          { icon: '📈', title: 'Market Pulse',          desc: 'Live platform metrics & trends' },
-  'ai-recommendations':    { icon: '🤖', title: 'AI Recommendations',    desc: 'Personalized property picks' },
+  'pipeline-overview':  { icon: '📊', title: 'Pipeline Overview',    desc: 'Lead stages: new, contacted, nurturing, under contract' },
+  'new-updates':        { icon: '📢', title: 'New Updates',          desc: 'Platform news & agent tips' },
+  'lead-activity':      { icon: '⚡', title: 'Lead Activity Feed',   desc: 'Real-time feed: views, form fills, email opens' },
+  'ai-lead-scoring':    { icon: '🤖', title: 'AI Lead Scoring',      desc: 'AI-ranked priority leads by intent signals' },
+  'need-keep-in-touch': { icon: '📞', title: 'Keep In Touch',        desc: 'Contacts overdue for follow-up' },
+  'my-listings-crm':    { icon: '🏢', title: 'My Listings',          desc: 'Active MLS listings with views & inquiries' },
+  'todays-tasks':       { icon: '✅', title: "Today's Tasks",        desc: 'Follow-ups, send listings, showings, referrals' },
+  'appointments':       { icon: '📅', title: 'Appointments',         desc: 'AI-optimized showing schedules' },
+  'hot-sheets':         { icon: '🔥', title: 'Hot Sheets',           desc: 'New listings, price reductions, open houses' },
 };
 
 function analyzeMessages(texts: string[]): string[] {
   const combined = texts.join(' ');
   const result = new Set<string>();
 
-  result.add('portfolio-stats');
+  result.add('pipeline-overview');
   result.add('todays-tasks');
+  result.add('new-updates');
 
-  if (/invest|portfolio|holding|return|yield|token|wealth|asset|property|real estate/i.test(combined)) {
-    ['today-new-investments', 'my-listings', 'transactions'].forEach(w => result.add(w));
+  if (/lead|client|contact|follow|crm|manage|prospect/i.test(combined)) {
+    ['lead-activity', 'need-keep-in-touch', 'ai-lead-scoring'].forEach(w => result.add(w));
   }
-  if (/market|listing|opportunit|deal|hot|price|trend|data/i.test(combined)) {
-    ['market-pulse', 'todays-opportunities', 'hot-sheets'].forEach(w => result.add(w));
-  }
-  if (/lead|client|contact|follow|agent|sell|crm|manage/i.test(combined)) {
-    result.add('need-keep-in-touch');
+  if (/market|listing|hot|price|trend|data|mls/i.test(combined)) {
+    result.add('hot-sheets');
+    result.add('my-listings-crm');
   }
   if (/schedule|appointment|showing|tour|visit/i.test(combined)) {
     result.add('appointments');
   }
-  if (/ai|insight|recommend|smart|automate|intelligence|personal/i.test(combined)) {
-    result.add('ai-recommendations');
-    result.add('market-pulse');
+  if (/ai|insight|smart|automate|intelligence|score|priorit/i.test(combined)) {
+    result.add('ai-lead-scoring');
+    result.add('lead-activity');
   }
-  if (/income|distribution|earn|transaction|payment/i.test(combined)) {
-    result.add('transactions');
+  if (/listing|property|mls|seller|buyer/i.test(combined)) {
+    result.add('my-listings-crm');
+    result.add('hot-sheets');
   }
   if (/update|news|announcement|latest/i.test(combined)) {
     result.add('new-updates');
   }
-  if (/new|start|begin|first|learn|beginner/i.test(combined)) {
-    ['new-updates', 'ai-recommendations', 'todays-opportunities'].forEach(w => result.add(w));
+  if (/new|start|begin|first|learn|simple/i.test(combined)) {
+    ['new-updates', 'pipeline-overview', 'todays-tasks'].forEach(w => result.add(w));
   }
-  if (/grow|scale|team|broker|expand|business/i.test(combined)) {
-    ['todays-opportunities', 'hot-sheets', 'need-keep-in-touch'].forEach(w => result.add(w));
-  }
-  if (/passive|income|earn|diversif/i.test(combined)) {
-    ['my-listings', 'transactions', 'portfolio-stats'].forEach(w => result.add(w));
+  if (/team|broker|scale|grow|expand/i.test(combined)) {
+    ['lead-activity', 'ai-lead-scoring', 'appointments', 'hot-sheets'].forEach(w => result.add(w));
   }
 
   return [...result];
 }
 
 function getFollowUp(initialMsg: string): { question: string; options: string[] } {
-  if (/invest|portfolio|yield|token|wealth|asset/i.test(initialMsg)) {
+  if (/team|broker|scale|manage/i.test(initialMsg)) {
     return {
-      question: "To tailor your investment widgets — what's your primary strategy?",
-      options: ['Maximize yield & passive income', 'Long-term portfolio growth', 'Diversify across markets', 'Actively monitor & trade'],
-    };
-  }
-  if (/lead|agent|deal|client|sell|crm/i.test(initialMsg)) {
-    return {
-      question: "To tune your agent tools — what's your team size?",
+      question: "To tune your team tools — what's your team size?",
       options: ['Solo agent', 'Small team (2–5)', 'Large team (6+)', 'Full brokerage'],
     };
   }
-  if (/market|trend|data|analysis|intel/i.test(initialMsg)) {
+  if (/lead|crm|prospect|follow/i.test(initialMsg)) {
     return {
-      question: "Which property types interest you most?",
-      options: ['Residential (single-family)', 'Multi-family', 'Commercial & Mixed-use', 'All types'],
+      question: "What's your biggest lead management challenge?",
+      options: ['Prioritizing who to call first', 'Keeping up with follow-ups', 'Automating outreach', 'Tracking deal stages'],
+    };
+  }
+  if (/listing|seller|buyer|showing/i.test(initialMsg)) {
+    return {
+      question: "Which side of the transaction do you focus on?",
+      options: ['Mostly buyer clients', 'Mostly seller listings', 'Equal mix', 'New construction / investment'],
     };
   }
   return {
     question: "One last thing — which best describes you?",
-    options: ['Real estate investor', 'Active agent / Broker', 'Property manager', 'Both investor & agent'],
+    options: ['Solo agent', 'Team lead / Broker', 'New agent getting started', 'Tech-forward agent scaling fast'],
   };
 }
 
