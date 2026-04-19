@@ -12,6 +12,7 @@ import DashboardTour from '@/components/DashboardTour';
 import LoftyAISetupWidget from '@/components/LoftyAISetupWidget';
 import LeadChatWidget from '@/components/LeadChatWidget';
 import AIPortfolioChatPanel from '@/components/AIPortfolioChatPanel';
+import LeadOutreachChatWindow from '@/components/LeadOutreachChatWindow';
 
 const WIDGETS_KEY  = 'lofty_widgets_v1';
 const TOUR_DONE_KEY = 'lofty_tour_complete_v1';
@@ -248,6 +249,7 @@ export default function DashboardPage() {
   const [showRouteModal, setShowRouteModal] = useState(false);
   const [routeGenerating, setRouteGenerating] = useState(false);
   const [outreachSent, setOutreachSent] = useState(false);
+  const [openOutreachChats, setOpenOutreachChats] = useState<typeof aiClusteredShowings>([]);
   const portfolioHistory = useMemo(() => generatePortfolioHistory(12), []);
   const { isComplete, setIsComplete, profile, setProfile } = useOnboardingComplete();
   const [agentName, setAgentName] = useState('Alex');
@@ -657,9 +659,7 @@ export default function DashboardPage() {
                 <Button
                   className="flex-1 gradient-brand text-white border-0"
                   onClick={() => {
-                    window.dispatchEvent(new CustomEvent('trigger-auto-text', {
-                      detail: { showings: aiClusteredShowings },
-                    }));
+                    setOpenOutreachChats(aiClusteredShowings);
                     setOutreachSent(true);
                     setTimeout(() => {
                       setShowRouteModal(false);
@@ -1356,8 +1356,20 @@ export default function DashboardPage() {
         </section>
       </div>
 
-      {/* ─── Lead Chat Widget ─── */}
+      {/* ─── Lead Chat Widget (Marcus Rivera / Voice Agent) ─── */}
       <LeadChatWidget />
+
+      {/* ─── Outreach Chat Windows (per showing lead) ─── */}
+      {openOutreachChats.map((showing, i) => (
+        <LeadOutreachChatWindow
+          key={showing.lead}
+          showing={showing}
+          offsetRight={24 + (i + 1) * (316)}
+          onClose={() =>
+            setOpenOutreachChats(prev => prev.filter(s => s.lead !== showing.lead))
+          }
+        />
+      ))}
 
       {/* ─── Bottom CTA: Next Distribution (kept) ─── */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-16">
