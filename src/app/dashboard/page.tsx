@@ -11,6 +11,7 @@ import { useOnboardingComplete, type OnboardingProfile } from '@/components/Onbo
 import DashboardTour from '@/components/DashboardTour';
 import LoftyAISetupWidget from '@/components/LoftyAISetupWidget';
 import LeadChatWidget from '@/components/LeadChatWidget';
+import AIPortfolioChatPanel from '@/components/AIPortfolioChatPanel';
 
 const WIDGETS_KEY  = 'lofty_widgets_v1';
 const TOUR_DONE_KEY = 'lofty_tour_complete_v1';
@@ -27,7 +28,8 @@ type WidgetId =
   | 'my-listings'
   | 'hot-sheets'
   | 'market-pulse'
-  | 'ai-recommendations';
+  | 'ai-recommendations'
+  | 'ai-portfolio-chat';
 
 const WIDGET_META: Record<WidgetId, { title: string; description: string }> = {
   'portfolio-stats':        { title: 'Portfolio Overview',        description: 'Total invested, current value, earnings, and monthly income at a glance' },
@@ -42,11 +44,12 @@ const WIDGET_META: Record<WidgetId, { title: string; description: string }> = {
   'hot-sheets':             { title: 'Hot Sheets',                description: 'Market-wide: new listings, price reductions, high yields' },
   'market-pulse':           { title: 'Market Pulse',              description: 'Live platform metrics: listings, average yield, AUM, trending cities' },
   'ai-recommendations':     { title: 'AI Recommendations',        description: 'Personalized property picks based on your portfolio and goals' },
+  'ai-portfolio-chat':      { title: 'Ask My Portfolio',          description: 'Chat with an AI that knows your holdings, yield, and distribution history' },
 };
 
 const ALWAYS_ON: WidgetId[] = [
   'portfolio-stats', 'new-updates', 'transactions', 'my-listings',
-  'todays-tasks', 'market-pulse', 'ai-recommendations',
+  'todays-tasks', 'market-pulse', 'ai-recommendations', 'ai-portfolio-chat',
 ];
 
 function deriveDefaultWidgets(profile: OnboardingProfile | null): WidgetId[] {
@@ -68,6 +71,7 @@ function deriveDefaultWidgets(profile: OnboardingProfile | null): WidgetId[] {
   if (profile.wantsAIInsights) {
     ids.add('todays-opportunities');
     ids.add('need-keep-in-touch');
+    ids.add('ai-portfolio-chat');
   }
   if (profile.wantsLeadScoring) ids.add('todays-opportunities');
 
@@ -1237,6 +1241,11 @@ export default function DashboardPage() {
               ))}
             </div>
           </section>
+        )}
+
+        {/* Widget: AI Portfolio Chat */}
+        {show('ai-portfolio-chat') && (
+          <AIPortfolioChatPanel onRemove={() => removeWidget('ai-portfolio-chat')} />
         )}
 
         {/* Widget: Add Card */}

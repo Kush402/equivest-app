@@ -88,6 +88,50 @@ interface AppointmentInfo {
   time: string;
 }
 
+interface CallSummary {
+  needs: string;
+  budget: string;
+  timeline: string;
+  sentiment: 'Hot' | 'Warm' | 'Cold';
+  objections: string;
+  nextSteps: string;
+}
+
+const DEMO_SUMMARY: CallSummary = {
+  needs: 'Passive income, coastal multifamily assets, low management overhead.',
+  budget: '$2,000 – $5,000 initial investment',
+  timeline: 'Ready to invest within 1–2 weeks',
+  sentiment: 'Hot',
+  objections: 'Liquidity concern addressed — secondary market explained.',
+  nextSteps: 'Send Highland Tower deck + schedule portfolio review call.',
+};
+
+const DRAFT_MESSAGES = [
+  {
+    label: 'Email',
+    icon: '✉️',
+    body: `Hi Marcus,
+
+Great chatting today! As discussed, Highland Tower is yielding 7.4% annually with monthly distributions and secondary market liquidity within 48 hours.
+
+I've attached the full investment deck. You can get started with as little as $50 — no lock-up.
+
+Looking forward to our call on April 25 at 2:00 PM.
+
+— Alex | Vick's Real Estate`,
+  },
+  {
+    label: 'Text',
+    icon: '💬',
+    body: `Hey Marcus! Great talking. Just sent over the Highland Tower deck 📄 — 7.4% yield, monthly payouts, and easy liquidity. Excited to connect on Apr 25 at 2 PM. Let me know if any Qs come up! – Alex`,
+  },
+  {
+    label: 'Follow-up Sequence',
+    icon: '🔄',
+    body: `Day 1: Send deck (done ✓)\nDay 3: Check-in text — "Any questions on Highland Tower?"\nDay 7: Market update email — "Austin yield up 0.3% this week"\nDay 14: Final nudge — "Funding at 87%, locking early price"`,
+  },
+];
+
 export default function LeadChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(CHAT_HISTORY);
@@ -98,6 +142,10 @@ export default function LeadChatWidget() {
   const [vapiError, setVapiError] = useState<string | null>(null);
   const [appointment, setAppointment] = useState<AppointmentInfo | null>(null);
   const [calendarAdded, setCalendarAdded] = useState(false);
+  const [callSummary, setCallSummary] = useState<CallSummary | null>(null);
+  const [summaryTab, setSummaryTab] = useState<'notes' | 'draft'>('notes');
+  const [activeDraft, setActiveDraft] = useState(0);
+  const [draftCopied, setDraftCopied] = useState(false);
   const vapiRef = useRef<Vapi | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -178,6 +226,7 @@ export default function LeadChatWidget() {
             time: sd?.appointmentTime ?? '2:00 PM',
           };
           setAppointment(appt);
+          setCallSummary(DEMO_SUMMARY);
           setTimeout(() => setCalendarAdded(true), 800);
         }
       } catch {
@@ -219,8 +268,15 @@ export default function LeadChatWidget() {
     if (timerRef.current) clearInterval(timerRef.current);
     if (!appointment) {
       setAppointment({ date: 'April 25, 2026', time: '2:00 PM' });
+      setCallSummary(DEMO_SUMMARY);
       setTimeout(() => setCalendarAdded(true), 800);
     }
+  }
+
+  function copyDraft() {
+    navigator.clipboard.writeText(DRAFT_MESSAGES[activeDraft].body).catch(() => {});
+    setDraftCopied(true);
+    setTimeout(() => setDraftCopied(false), 2000);
   }
 
   function toggleMute() {
@@ -378,7 +434,7 @@ export default function LeadChatWidget() {
                 <div className="flex items-center justify-between">
                   <p className="text-[12px] text-gray-500 font-medium">Call ended · {formatDuration(callDuration)}</p>
                   <button
-                    onClick={() => { setCallState('idle'); setLiveTranscript([]); setAppointment(null); setCalendarAdded(false); }}
+                    onClick={() => { setCallState('idle'); setLiveTranscript([]); setAppointment(null); setCalendarAdded(false); setCallSummary(null); setSummaryTab('notes'); }}
                     className="text-[11px] text-violet-600 font-semibold hover:underline"
                   >
                     Call Again
@@ -386,34 +442,81 @@ export default function LeadChatWidget() {
                 </div>
               )}
 
-              {/* Appointment structured output */}
-              {appointment && (
-                <div className="mt-2 rounded-xl border border-violet-200 bg-violet-50 p-3 space-y-2">
-                  <p className="text-[10px] text-violet-500 font-semibold uppercase tracking-wider">Appointment Booked</p>
-                  <div className="flex items-center gap-2">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-600 flex-shrink-0">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                    <span className="text-[12px] font-semibold text-violet-900">{appointment.date}</span>
+              {/* AI Call Summary */}
+              {callSummary && (
+                <div className="mt-2 rounded-xl border border-violet-200 bg-violet-50 overflow-hidden">
+                  {/* Tab header */}
+                  <div className="flex border-b border-violet-200">
+                    <button
+                      onClick={() => setSummaryTab('notes')}
+                      className={`flex-1 py-2 text-[11px] font-semibold transition-colors ${summaryTab === 'notes' ? 'bg-violet-100 text-violet-800' : 'text-violet-500 hover:text-violet-700'}`}
+                    >
+                      ✦ AI Call Notes
+                    </button>
+                    <button
+                      onClick={() => setSummaryTab('draft')}
+                      className={`flex-1 py-2 text-[11px] font-semibold transition-colors ${summaryTab === 'draft' ? 'bg-violet-100 text-violet-800' : 'text-violet-500 hover:text-violet-700'}`}
+                    >
+                      ✉️ Draft Follow-up
+                    </button>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-600 flex-shrink-0">
-                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    <span className="text-[12px] font-semibold text-violet-900">{appointment.time}</span>
-                  </div>
-                </div>
-              )}
 
-              {/* Fake calendar confirmation */}
-              {calendarAdded && appointment && (
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 flex items-start gap-2">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 flex-shrink-0 mt-0.5">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                  <p className="text-[11px] text-emerald-700 font-medium">
-                    Added appointment to your calendar on {appointment.date} at {appointment.time}
-                  </p>
+                  {summaryTab === 'notes' && (
+                    <div className="p-3 space-y-2">
+                      {[
+                        { label: 'Client Needs', value: callSummary.needs },
+                        { label: 'Budget', value: callSummary.budget },
+                        { label: 'Timeline', value: callSummary.timeline },
+                        { label: 'Objections', value: callSummary.objections },
+                        { label: 'Next Steps', value: callSummary.nextSteps },
+                      ].map(row => (
+                        <div key={row.label}>
+                          <p className="text-[9px] font-bold text-violet-400 uppercase tracking-widest">{row.label}</p>
+                          <p className="text-[11px] text-gray-700 leading-snug">{row.value}</p>
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-1.5 pt-1">
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white ${callSummary.sentiment === 'Hot' ? 'bg-red-500' : callSummary.sentiment === 'Warm' ? 'bg-amber-500' : 'bg-gray-400'}`}>
+                          {callSummary.sentiment}
+                        </span>
+                        <span className="text-[10px] text-violet-500">Intent Signal</span>
+                      </div>
+                      {appointment && (
+                        <div className="flex items-center gap-2 pt-1 border-t border-violet-100">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-500">
+                            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                          </svg>
+                          <span className="text-[11px] font-semibold text-violet-900">{appointment.date} · {appointment.time}</span>
+                          {calendarAdded && <span className="text-[9px] font-bold text-emerald-600 ml-auto">✓ Calendar</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {summaryTab === 'draft' && (
+                    <div className="p-3 space-y-2">
+                      <div className="flex gap-1.5">
+                        {DRAFT_MESSAGES.map((d, i) => (
+                          <button
+                            key={i}
+                            onClick={() => { setActiveDraft(i); setDraftCopied(false); }}
+                            className={`text-[10px] font-semibold px-2 py-1 rounded-lg transition-colors ${activeDraft === i ? 'bg-violet-600 text-white' : 'bg-white text-violet-600 border border-violet-200 hover:bg-violet-50'}`}
+                          >
+                            {d.icon} {d.label}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="bg-white rounded-lg border border-violet-100 p-2.5">
+                        <pre className="text-[10px] text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">{DRAFT_MESSAGES[activeDraft].body}</pre>
+                      </div>
+                      <button
+                        onClick={copyDraft}
+                        className={`w-full py-1.5 rounded-lg text-[11px] font-semibold transition-colors ${draftCopied ? 'bg-emerald-500 text-white' : 'bg-violet-600 text-white hover:bg-violet-700'}`}
+                      >
+                        {draftCopied ? '✓ Copied!' : 'Copy to Clipboard'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

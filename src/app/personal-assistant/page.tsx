@@ -4,11 +4,14 @@ import { useState, useRef, useEffect } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+type CallStatus = 'idle' | 'connecting' | 'active' | 'ended' | 'error';
+
 interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   text: string;
   cards?: ActionCard[];
+  callCard?: boolean;
   timestamp: Date;
 }
 
@@ -47,10 +50,41 @@ interface ScriptedResponse {
   cards?: ActionCard[];
   tasks?: Omit<Task, 'id'>[];
   automations?: Omit<Automation, 'id'>[];
+  triggerCallDemo?: boolean;
 }
 
 function getAIResponse(input: string): ScriptedResponse {
   const q = input.toLowerCase();
+
+  if (q.match(/hot.?lead|positive.?intent|auto.?call|call.*repl|outreach.*auto|auto.*outreach.*call|text.*email.*call|smart.*outreach/)) {
+    return {
+      text: `Automation deployed. I'm now monitoring **4 hot leads** (score >85) and sending personalized text + email outreach within 30 seconds. The moment a lead replies with buying intent, I'll automatically route a live voice call directly to you — no manual action needed.\n\nHere are the leads I'm targeting:`,
+      cards: [
+        { type: 'lead', title: 'Marcus Rivera', subtitle: 'Austin, TX · Score 94', meta: 'Viewed Highland Tower 3x · Inquiry 48h ago', badge: 'Hot 🔥', badgeColor: '#EF4444' },
+        { type: 'lead', title: 'Sarah Chen', subtitle: 'Tempe, AZ · Score 88', meta: 'Pre-approved $480K · Viewed 6 listings', badge: 'Hot 🔥', badgeColor: '#EF4444' },
+        { type: 'lead', title: 'David Okafor', subtitle: 'Tempe, AZ · Score 85', meta: 'Motivated seller · Listed 90+ days', badge: 'Warm', badgeColor: '#F59E0B' },
+      ],
+      automations: [
+        {
+          name: 'Hot Lead → Outreach → Auto-Call',
+          trigger: 'Lead score >85 + inactive 7+ days',
+          actions: [
+            'Send personalized text within 30s',
+            'Send tailored email within 2 min',
+            'Monitor reply for positive intent (AI)',
+            'Auto-initiate voice call on positive intent',
+          ],
+          status: 'active',
+          runs: 0,
+          createdAt: 'Just now',
+        },
+      ],
+      tasks: [
+        { title: 'Review hot lead outreach results', status: 'pending', priority: 'high', due: 'Today', source: 'AI Automation' },
+      ],
+      triggerCallDemo: true,
+    };
+  }
 
   if (q.match(/lead|contact|prospect|85281|zip|area|find/)) {
     return {
@@ -169,6 +203,7 @@ function getAIResponse(input: string): ScriptedResponse {
 // ─── Suggested Prompts ────────────────────────────────────────────────────────
 
 const SUGGESTED_PROMPTS = [
+  'Smart outreach automation: text + email hot leads, auto-call on positive intent',
   'Find me leads around the 85281 zip code',
   'Create outreach campaigns for these leads targeting 142 W Elm St',
   'Schedule showings with my top prospects this week',
@@ -292,17 +327,144 @@ function CardRenderer({ card }: { card: ActionCard }) {
   return <GenericCard card={card} />;
 }
 
+// ─── Call Card ────────────────────────────────────────────────────────────────
+
+function formatDuration(s: number) {
+  const m = Math.floor(s / 60).toString().padStart(2, '0');
+  const sec = (s % 60).toString().padStart(2, '0');
+  return `${m}:${sec}`;
+}
+
+function CallCard({
+  callState,
+  callDuration,
+  callError,
+  calendarAdded,
+  appointment,
+  onAddCalendar,
+  onReset,
+}: {
+  callState: CallStatus;
+  callDuration: number;
+  callError: string | null;
+  calendarAdded: boolean;
+  appointment: { date: string; time: string } | null;
+  onAddCalendar: () => void;
+  onReset: () => void;
+}) {
+  return (
+    <div className="rounded-xl border p-3 bg-white space-y-2" style={{ borderColor: 'var(--lofty-border)' }}>
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg, #7C3AED, #4F46E5)' }}>
+          MR
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold" style={{ color: 'var(--lofty-fg-1)' }}>Marcus Rivera</p>
+          <p className="text-[11px]" style={{ color: 'var(--lofty-fg-3)' }}>Austin, TX · Score 94 🔥</p>
+        </div>
+        {callState === 'active' && (
+          <span className="flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full font-semibold"
+            style={{ background: '#ECFDF5', color: '#16B47C' }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16B47C] animate-pulse" />
+            Live {formatDuration(callDuration)}
+          </span>
+        )}
+      </div>
+
+      {callState === 'connecting' && (
+        <div className="flex items-center gap-2 py-2 px-3 rounded-lg" style={{ background: 'var(--lofty-bg-muted)' }}>
+          <span className="w-3 h-3 border-2 border-violet-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          <span className="text-[12px] font-medium" style={{ color: 'var(--lofty-fg-2)' }}>Connecting call to your phone…</span>
+        </div>
+      )}
+
+      {callState === 'active' && (
+        <div className="flex items-center gap-2 py-2 px-3 rounded-lg" style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16B47C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.38 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.1A16 16 0 0 0 14 15.18l.86-.86a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z" />
+          </svg>
+          <span className="text-[12px] font-medium text-[#16B47C]">Call ringing on your phone — pick up to speak with Marcus!</span>
+        </div>
+      )}
+
+      {callState === 'error' && callError && (
+        <div className="py-2 px-3 rounded-lg bg-amber-50 border border-amber-200">
+          <p className="text-[11px] text-amber-700">{callError}</p>
+        </div>
+      )}
+
+      {callState === 'ended' && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between py-2 px-3 rounded-lg" style={{ background: 'var(--lofty-bg-muted)' }}>
+            <span className="text-[12px] font-medium" style={{ color: 'var(--lofty-fg-2)' }}>Call ended · {formatDuration(callDuration)}</span>
+            <button onClick={onReset} className="text-[11px] font-semibold hover:underline" style={{ color: 'var(--lofty-brand-500)' }}>
+              Reset
+            </button>
+          </div>
+          {appointment && !calendarAdded && (
+            <button
+              onClick={onAddCalendar}
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12px] font-semibold transition-colors"
+              style={{ background: 'var(--lofty-brand-050)', color: 'var(--lofty-brand-500)', border: '1px solid var(--lofty-brand-200)' }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              Add {appointment.date} {appointment.time} to Calendar
+            </button>
+          )}
+          {calendarAdded && (
+            <p className="text-center text-[11px] font-semibold" style={{ color: '#16B47C' }}>✓ Added to calendar</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Message Bubble ───────────────────────────────────────────────────────────
 
-function MessageBubble({ msg }: { msg: Message }) {
+interface MessageBubbleProps {
+  msg: Message;
+  callState?: CallStatus;
+  callDuration?: number;
+  callError?: string | null;
+  calendarAdded?: boolean;
+  appointment?: { date: string; time: string } | null;
+  onAddCalendar?: () => void;
+  onResetCall?: () => void;
+}
+
+function MessageBubble({ msg, callState, callDuration = 0, callError = null, calendarAdded = false, appointment = null, onAddCalendar, onResetCall }: MessageBubbleProps) {
   const isUser = msg.role === 'user';
+  const isSystem = msg.role === 'system';
 
   function renderText(text: string) {
-    const parts = text.split(/(\*\*[^*]+\*\*)/g);
-    return parts.map((p, i) =>
-      p.startsWith('**') && p.endsWith('**')
-        ? <strong key={i}>{p.slice(2, -2)}</strong>
-        : p
+    return text.split('\n').map((line, li) => {
+      const parts = line.split(/(\*\*[^*]+\*\*)/g);
+      return (
+        <span key={li}>
+          {parts.map((p, i) =>
+            p.startsWith('**') && p.endsWith('**')
+              ? <strong key={i}>{p.slice(2, -2)}</strong>
+              : p
+          )}
+          {li < text.split('\n').length - 1 && <br />}
+        </span>
+      );
+    });
+  }
+
+  if (isSystem) {
+    return (
+      <div className="flex justify-center">
+        <div className="rounded-xl px-4 py-2.5 text-[12px] font-medium max-w-[90%]"
+          style={{ background: '#FFF7ED', border: '1px solid #FED7AA', color: '#92400E' }}>
+          {msg.text}
+        </div>
+      </div>
     );
   }
 
@@ -327,6 +489,19 @@ function MessageBubble({ msg }: { msg: Message }) {
         {msg.cards && msg.cards.length > 0 && (
           <div className="space-y-2 w-full">
             {msg.cards.map((card, i) => <CardRenderer key={i} card={card} />)}
+          </div>
+        )}
+        {msg.callCard && callState && callState !== 'idle' && (
+          <div className="w-full">
+            <CallCard
+              callState={callState}
+              callDuration={callDuration}
+              callError={callError}
+              calendarAdded={calendarAdded}
+              appointment={appointment}
+              onAddCalendar={onAddCalendar ?? (() => {})}
+              onReset={onResetCall ?? (() => {})}
+            />
           </div>
         )}
       </div>
@@ -370,12 +545,83 @@ export default function PersonalAssistantPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [sidebarTab, setSidebarTab] = useState<'tasks' | 'automations'>('tasks');
+  const [callState, setCallState] = useState<CallStatus>('idle');
+  const [callDuration, setCallDuration] = useState(0);
+  const [callId, setCallId] = useState<string | null>(null);
+  const [callError, setCallError] = useState<string | null>(null);
+  const [calendarAdded, setCalendarAdded] = useState(false);
+  const [appointment, setAppointment] = useState<{ date: string; time: string } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const callTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const callPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
+
+  useEffect(() => {
+    return () => {
+      if (callTimerRef.current) clearInterval(callTimerRef.current);
+      if (callPollRef.current) clearInterval(callPollRef.current);
+    };
+  }, []);
+
+  function startCallPolling(id: string) {
+    let attempts = 0;
+    callPollRef.current = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch(`/api/vapi/status?id=${id}`);
+        const data = await res.json();
+        if (data.status === 'ended' || data.status === 'failed' || attempts > 60) {
+          if (callPollRef.current) clearInterval(callPollRef.current);
+          if (callTimerRef.current) clearInterval(callTimerRef.current);
+          setCallState('ended');
+          if (data.structuredData?.appointmentDate) {
+            setAppointment({ date: data.structuredData.appointmentDate, time: data.structuredData.appointmentTime ?? '' });
+          }
+        }
+      } catch {
+        // ignore polling errors
+      }
+    }, 5000);
+  }
+
+  async function triggerVapiCall() {
+    setCallState('connecting');
+    setCallDuration(0);
+    setCallError(null);
+    setCalendarAdded(false);
+    setAppointment(null);
+    try {
+      const res = await fetch('/api/vapi/call', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        setCallState('error');
+        setCallError(data?.error ?? 'Failed to start call. Check VAPI env vars in .env.local.');
+        return;
+      }
+      setCallId(data.callId);
+      setCallState('active');
+      callTimerRef.current = setInterval(() => setCallDuration(d => d + 1), 1000);
+      startCallPolling(data.callId);
+    } catch (err) {
+      setCallState('error');
+      setCallError(err instanceof Error ? err.message : 'Failed to start call.');
+    }
+  }
+
+  function resetCall() {
+    if (callTimerRef.current) clearInterval(callTimerRef.current);
+    if (callPollRef.current) clearInterval(callPollRef.current);
+    setCallState('idle');
+    setCallDuration(0);
+    setCallId(null);
+    setCallError(null);
+    setCalendarAdded(false);
+    setAppointment(null);
+  }
 
   function send(text: string) {
     if (!text.trim()) return;
@@ -405,6 +651,32 @@ export default function PersonalAssistantPage() {
         const newAutos: Automation[] = response.automations.map(a => ({ ...a, id: uid() }));
         setAutomations(prev => [...newAutos, ...prev]);
         if (!response.tasks) setSidebarTab('automations');
+      }
+
+      if (response.triggerCallDemo) {
+        // Step 2: Marcus replies ~3s after automation fires
+        setTimeout(() => {
+          const replyMsg: Message = {
+            id: uid(),
+            role: 'system',
+            text: '📱 Marcus Rivera replied: "Hey yeah, I\'ve been looking at that Highland Tower listing seriously. Honestly really interested — when can we hop on a call?"',
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, replyMsg]);
+
+          // Step 3: AI detects intent + triggers call ~1.5s later
+          setTimeout(() => {
+            const callMsg: Message = {
+              id: uid(),
+              role: 'assistant',
+              text: '🔥 High buying intent detected from Marcus Rivera. Initiating voice call to your phone now...',
+              callCard: true,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, callMsg]);
+            triggerVapiCall();
+          }, 1500);
+        }, 3000);
       }
     }, 1400);
   }
@@ -496,7 +768,19 @@ export default function PersonalAssistantPage() {
               </div>
             )}
 
-            {messages.map(msg => <MessageBubble key={msg.id} msg={msg} />)}
+            {messages.map(msg => (
+              <MessageBubble
+                key={msg.id}
+                msg={msg}
+                callState={msg.callCard ? callState : undefined}
+                callDuration={callDuration}
+                callError={callError}
+                calendarAdded={calendarAdded}
+                appointment={appointment}
+                onAddCalendar={() => setCalendarAdded(true)}
+                onResetCall={resetCall}
+              />
+            ))}
             {isTyping && <TypingIndicator />}
             <div ref={bottomRef} />
           </div>
