@@ -41,8 +41,8 @@ const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent
 
 export default function AllocationChart({ slices }: AllocationChartProps) {
   return (
-    <div className="h-52 w-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="h-52 w-full min-w-0">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={208}>
         <PieChart>
           <Pie
             data={slices}

@@ -48,7 +48,7 @@ export default async function PropertyDetailPage({ params }: Props) {
 
       {/* ─── Hero ─── */}
       <div className="relative h-80 md:h-[420px] w-full overflow-hidden">
-        <Image src={property.image} alt={property.name} fill className="object-cover" priority />
+        <Image src={property.image} alt={property.name} fill sizes="100vw" className="object-cover" priority />
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
 
         <div className="absolute top-4 left-4">

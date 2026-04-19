@@ -142,7 +142,7 @@ export default function Home() {
             <div className="hidden lg:block relative">
               <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/50" style={{ border: '1px solid oklch(1 0 0 / 10%)' }}>
                 <div className="relative h-72">
-                  <Image src="/images/prop1.png" alt="Featured property" fill className="object-cover" priority />
+                  <Image src="/images/prop1.png" alt="Featured property" fill sizes="(max-width: 768px) 100vw, 560px" className="object-cover" priority />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4">
                     <p className="text-white/70 text-xs mb-1">Featured Property</p>

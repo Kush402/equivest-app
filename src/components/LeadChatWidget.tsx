@@ -1,0 +1,353 @@
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+import Vapi from '@vapi-ai/web';
+
+const LEAD = {
+  name: 'Marcus Rivera',
+  initials: 'MR',
+  location: 'Austin, TX',
+  score: 94,
+};
+
+const CHAT_HISTORY = [
+  {
+    from: 'ai',
+    text: 'Hey Marcus! This is Alex from Vick\'s Real Estate. I saw you\'ve been checking out our Highland Tower listing — just wanted to reach out and see if you had any questions. It\'s one of our top picks right now.',
+    time: '9:14 AM',
+  },
+  {
+    from: 'lead',
+    text: 'Hey Alex, yeah I\'ve been looking at it. Really like the location. What kind of returns are investors seeing on it?',
+    time: '9:16 AM',
+  },
+  {
+    from: 'ai',
+    text: 'Great question! Highland Tower is currently yielding around 7.4% annually. We\'ve got investors getting monthly distributions — it\'s been one of our more consistent performers. You can get started with as little as $50, so the barrier to entry is pretty low.',
+    time: '9:17 AM',
+  },
+  {
+    from: 'lead',
+    text: 'That\'s solid. I\'m a bit cautious about locking up capital though — what if I need to get out early?',
+    time: '9:19 AM',
+  },
+  {
+    from: 'ai',
+    text: 'Totally understandable — that\'s actually one of the things people love about our platform. You can list your shares on our secondary market anytime. Typically clears within 48 hours. Your money\'s not trapped. Would you be open to a quick call so I can walk you through the full deal and answer anything else?',
+    time: '9:20 AM',
+  },
+  {
+    from: 'lead',
+    text: 'Yeah that actually sounds good. I\'m free right now if you want to connect.',
+    time: '9:21 AM',
+  },
+];
+
+type CallState = 'idle' | 'connecting' | 'active' | 'ended' | 'error';
+
+interface AppointmentInfo {
+  date: string;
+  time: string;
+}
+
+export default function LeadChatWidget() {
+  const [open, setOpen] = useState(false);
+  const [callState, setCallState] = useState<CallState>('idle');
+  const [callDuration, setCallDuration] = useState(0);
+  const [liveTranscript, setLiveTranscript] = useState<string[]>([]);
+  const [isMuted, setIsMuted] = useState(false);
+  const [vapiError, setVapiError] = useState<string | null>(null);
+  const [appointment, setAppointment] = useState<AppointmentInfo | null>(null);
+  const [calendarAdded, setCalendarAdded] = useState(false);
+  const vapiRef = useRef<Vapi | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [open, liveTranscript]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (pollRef.current) clearInterval(pollRef.current);
+      vapiRef.current?.stop();
+    };
+  }, []);
+
+  function formatDuration(secs: number) {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function startPolling(id: string) {
+    let attempts = 0;
+    pollRef.current = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch(`/api/vapi/status?id=${id}`);
+        const data = await res.json();
+        if (data.status === 'ended' || data.status === 'failed' || attempts > 60) {
+          if (pollRef.current) clearInterval(pollRef.current);
+          setCallState('ended');
+          if (timerRef.current) clearInterval(timerRef.current);
+          const sd = data.structuredData as { appointmentDate?: string; appointmentTime?: string } | null;
+          const appt: AppointmentInfo = {
+            date: sd?.appointmentDate ?? 'April 25, 2026',
+            time: sd?.appointmentTime ?? '2:00 PM',
+          };
+          setAppointment(appt);
+          setTimeout(() => setCalendarAdded(true), 800);
+        }
+      } catch {
+        // silent
+      }
+    }, 5000);
+  }
+
+  async function startCall() {
+    setVapiError(null);
+    setCallState('connecting');
+    setCallDuration(0);
+    setAppointment(null);
+    setCalendarAdded(false);
+
+    try {
+      const res = await fetch('/api/vapi/call', { method: 'POST' });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCallState('error');
+        setVapiError(data?.error ?? 'Failed to start call. Check VAPI_PRIVATE_KEY and VAPI_PHONE_NUMBER_ID in .env.local.');
+        return;
+      }
+
+      setCallState('active');
+      timerRef.current = setInterval(() => setCallDuration(d => d + 1), 1000);
+      startPolling(data.callId);
+    } catch (err: unknown) {
+      setCallState('error');
+      setVapiError(err instanceof Error ? err.message : 'Failed to start call.');
+    }
+  }
+
+  function endCall() {
+    if (pollRef.current) clearInterval(pollRef.current);
+    vapiRef.current?.stop();
+    setCallState('ended');
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (!appointment) {
+      setAppointment({ date: 'April 25, 2026', time: '2:00 PM' });
+      setTimeout(() => setCalendarAdded(true), 800);
+    }
+  }
+
+  function toggleMute() {
+    if (!vapiRef.current) return;
+    const next = !isMuted;
+    vapiRef.current.setMuted(next);
+    setIsMuted(next);
+  }
+
+  const isInCall = callState === 'active' || callState === 'connecting';
+
+  return (
+    <>
+      {/* Floating chat bubble */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+
+        {/* Chat panel */}
+        {open && (
+          <div className="w-[340px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden"
+            style={{ maxHeight: '520px' }}>
+
+            {/* Header */}
+            <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-3 flex items-center gap-3">
+              <div className="relative">
+                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm">
+                  {LEAD.initials}
+                </div>
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-white rounded-full" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-semibold text-sm leading-tight">{LEAD.name}</p>
+                <p className="text-white/70 text-[10px]">{LEAD.location}</p>
+              </div>
+              <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white transition-colors ml-1">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M6 6l12 12M6 18L18 6" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* AI Lead Score Banner */}
+            <div className="bg-violet-50 border-b border-violet-100 px-4 py-2 flex items-center gap-2">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-600 text-white">ALEX</span>
+              <p className="text-[11px] text-violet-700 font-medium">
+                Lead score <span className="font-bold text-violet-900">{LEAD.score}/100</span> — high intent, ready to schedule a call
+              </p>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-[#f8f8fc]" style={{ minHeight: 0 }}>
+              {CHAT_HISTORY.map((msg, i) => (
+                <div key={i} className={`flex ${msg.from === 'lead' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.from === 'ai' && (
+                    <div className="w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center text-white text-[8px] font-bold mr-1.5 flex-shrink-0 mt-0.5">
+                      VRE
+                    </div>
+                  )}
+                  <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-[12px] leading-relaxed ${
+                    msg.from === 'lead'
+                      ? 'bg-violet-600 text-white rounded-br-sm'
+                      : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm'
+                  }`}>
+                    <p>{msg.text}</p>
+                    <p className={`text-[10px] mt-1 ${msg.from === 'lead' ? 'text-violet-200' : 'text-gray-400'}`}>{msg.time}</p>
+                  </div>
+                </div>
+              ))}
+
+              {/* Live call transcript */}
+              {liveTranscript.length > 0 && (
+                <div className="border-t border-violet-200 pt-2 space-y-1">
+                  <p className="text-[10px] text-violet-500 font-semibold uppercase tracking-wider">Live Call Transcript</p>
+                  {liveTranscript.map((line, i) => (
+                    <p key={i} className="text-[11px] text-gray-600 leading-relaxed">{line}</p>
+                  ))}
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Call / Error area */}
+            <div className="px-4 py-3 bg-white border-t border-gray-100">
+              {vapiError && (
+                <div className="mb-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-[11px] text-amber-700">
+                  {vapiError}
+                </div>
+              )}
+
+              {callState === 'idle' || callState === 'error' ? (
+                <button
+                  onClick={startCall}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-semibold shadow-md shadow-violet-300/40 hover:opacity-90 transition-opacity"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.08 1.18 2 2 0 012.06 0h3a2 2 0 012 1.72 12.6 12.6 0 00.67 2.68 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.4-1.4a2 2 0 012.11-.45 12.6 12.6 0 002.68.67A2 2 0 0122 16.92z" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Start Voice AI Call
+                </button>
+              ) : callState === 'connecting' ? (
+                <div className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-100 text-gray-500 text-sm font-semibold">
+                  <span className="w-3 h-3 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                  Connecting…
+                </div>
+              ) : callState === 'active' ? (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[12px] font-semibold text-emerald-700">Live {formatDuration(callDuration)}</span>
+                  </div>
+                  <button
+                    onClick={toggleMute}
+                    className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${isMuted ? 'bg-red-50 border-red-200 text-red-500' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}
+                    aria-label={isMuted ? 'Unmute' : 'Mute'}
+                  >
+                    {isMuted ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6" strokeLinecap="round"/>
+                        <path d="M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23M12 20v4M8 20h8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" strokeLinecap="round"/>
+                        <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    onClick={endCall}
+                    className="w-9 h-9 rounded-xl bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                    aria-label="End call"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <p className="text-[12px] text-gray-500 font-medium">Call ended · {formatDuration(callDuration)}</p>
+                  <button
+                    onClick={() => { setCallState('idle'); setLiveTranscript([]); setAppointment(null); setCalendarAdded(false); }}
+                    className="text-[11px] text-violet-600 font-semibold hover:underline"
+                  >
+                    Call Again
+                  </button>
+                </div>
+              )}
+
+              {/* Appointment structured output */}
+              {appointment && (
+                <div className="mt-2 rounded-xl border border-violet-200 bg-violet-50 p-3 space-y-2">
+                  <p className="text-[10px] text-violet-500 font-semibold uppercase tracking-wider">Appointment Booked</p>
+                  <div className="flex items-center gap-2">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-600 flex-shrink-0">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    <span className="text-[12px] font-semibold text-violet-900">{appointment.date}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-600 flex-shrink-0">
+                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span className="text-[12px] font-semibold text-violet-900">{appointment.time}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Fake calendar confirmation */}
+              {calendarAdded && appointment && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 flex items-start gap-2">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 flex-shrink-0 mt-0.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <p className="text-[11px] text-emerald-700 font-medium">
+                    Added appointment to your calendar on {appointment.date} at {appointment.time}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Chat bubble button */}
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="relative w-14 h-14 rounded-full bg-gradient-to-br from-violet-600 to-purple-700 text-white shadow-lg shadow-violet-500/40 hover:scale-105 transition-transform flex items-center justify-center"
+          aria-label="Open lead chat"
+        >
+          {!open ? (
+            <>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {/* Unread badge */}
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold flex items-center justify-center border-2 border-white">
+                1
+              </span>
+            </>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round"/>
+            </svg>
+          )}
+        </button>
+      </div>
+    </>
+  );
+}
