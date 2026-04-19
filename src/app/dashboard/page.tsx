@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/properties';
 import { generatePortfolioHistory } from '@/lib/mockChartData';
 import { EarningsChartClient as EarningsChart, AllocationChartClient as AllocationChart } from '@/components/charts/DashboardChartClients';
-import { OnboardingModal, useOnboardingComplete, type OnboardingProfile } from '@/components/OnboardingModal';
+import { useOnboardingComplete, type OnboardingProfile } from '@/components/OnboardingModal';
 import DashboardTour from '@/components/DashboardTour';
+import LoftyAISetupWidget from '@/components/LoftyAISetupWidget';
 import LeadChatWidget from '@/components/LeadChatWidget';
 
 const WIDGETS_KEY  = 'lofty_widgets_v1';
@@ -246,24 +247,23 @@ export default function DashboardPage() {
   const portfolioHistory = generatePortfolioHistory(12);
   const { isComplete, setIsComplete, profile, setProfile } = useOnboardingComplete();
   const [agentName, setAgentName] = useState('Alex');
-  const [visibleWidgets, setVisibleWidgets] = useState<Set<WidgetId>>(new Set(ALWAYS_ON));
+  const [visibleWidgets, setVisibleWidgets] = useState<Set<WidgetId>>(new Set());
   const [showWidgetPanel, setShowWidgetPanel] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [tourStartWidget, setTourStartWidget] = useState<WidgetId | undefined>(undefined);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(WIDGETS_KEY);
       if (raw) {
-        // Union stored widgets with ALWAYS_ON so new widgets appear for existing users
         const stored = new Set(JSON.parse(raw) as WidgetId[]);
-        const merged = new Set([...stored, ...ALWAYS_ON]);
-        setVisibleWidgets(merged);
-        localStorage.setItem(WIDGETS_KEY, JSON.stringify([...merged]));
+        setVisibleWidgets(stored);
       } else if (profile) {
         const defaults = deriveDefaultWidgets(profile);
         setVisibleWidgets(new Set(defaults));
         localStorage.setItem(WIDGETS_KEY, JSON.stringify(defaults));
       }
+      // No data + no profile → keep empty (AI setup widget handles first-run)
     } catch { /* ignore */ }
   }, [profile]);
 
@@ -272,12 +272,19 @@ export default function DashboardPage() {
   }, [profile]);
 
   function toggleWidget(id: WidgetId) {
+    const isAdding = !visibleWidgets.has(id);
     setVisibleWidgets(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       localStorage.setItem(WIDGETS_KEY, JSON.stringify([...next]));
       return next;
     });
+    if (isAdding) {
+      setTimeout(() => {
+        setTourStartWidget(id);
+        setShowTour(true);
+      }, 400);
+    }
   }
 
   function removeWidget(id: WidgetId) {
@@ -289,6 +296,31 @@ export default function DashboardPage() {
     });
   }
 
+  function handleActivateWidgets(widgetIds: string[]) {
+    setIsComplete(true);
+    localStorage.setItem('lofty_onboarding_v2', JSON.stringify({ complete: true, profile: {} }));
+
+    const ids = widgetIds as WidgetId[];
+    ids.forEach((id, i) => {
+      setTimeout(() => {
+        setVisibleWidgets(prev => {
+          const next = new Set(prev);
+          next.add(id);
+          if (i === ids.length - 1) {
+            localStorage.setItem(WIDGETS_KEY, JSON.stringify([...next]));
+          }
+          return next;
+        });
+      }, i * 200);
+    });
+
+    // Launch full tour after all widgets are in DOM
+    setTimeout(() => {
+      setTourStartWidget(undefined);
+      setShowTour(true);
+    }, ids.length * 200 + 600);
+  }
+
   const show = (id: WidgetId) => visibleWidgets.has(id);
 
   const hasHoldings = holdings.length > 0;
@@ -296,29 +328,13 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-[#f5f6f8] pt-16">
 
-      {/* ─── AI Onboarding Modal ─── */}
-      {isComplete === false && (
-        <OnboardingModal
-          onComplete={(p) => {
-            setAgentName(p.name || 'Alex');
-            setProfile(p);
-            const defaults = deriveDefaultWidgets(p);
-            setVisibleWidgets(new Set(defaults));
-            localStorage.setItem(WIDGETS_KEY, JSON.stringify(defaults));
-            setIsComplete(true);
-            // Auto-launch tour for first-time users
-            if (!localStorage.getItem(TOUR_DONE_KEY)) {
-              setTimeout(() => setShowTour(true), 600);
-            }
-          }}
-        />
-      )}
-
       {/* ─── Dashboard Tour ─── */}
       {showTour && (
         <DashboardTour
+          initialWidgetId={tourStartWidget}
           onDone={() => {
             setShowTour(false);
+            setTourStartWidget(undefined);
             localStorage.setItem(TOUR_DONE_KEY, '1');
           }}
         />
@@ -343,7 +359,7 @@ export default function DashboardPage() {
           {isComplete && (
             <>
               <button
-                onClick={() => { localStorage.removeItem('lofty_onboarding_v2'); localStorage.removeItem(WIDGETS_KEY); localStorage.removeItem(TOUR_DONE_KEY); setIsComplete(false); setAgentName('Alex'); setProfile(null); setVisibleWidgets(new Set(ALWAYS_ON)); }}
+                onClick={() => { localStorage.removeItem('lofty_onboarding_v2'); localStorage.removeItem(WIDGETS_KEY); localStorage.removeItem(TOUR_DONE_KEY); setIsComplete(false); setAgentName('Alex'); setProfile(null); setVisibleWidgets(new Set()); }}
                 className="text-[11px] text-gray-300 hover:text-violet-500 transition-colors font-medium border border-gray-200 hover:border-violet-300 rounded-md px-2 py-1"
                 title="Re-run AI onboarding"
               >
@@ -610,6 +626,11 @@ export default function DashboardPage() {
 
       {/* ─── Widget Grid ─── */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        {/* Widget: Lofty AI Setup (shown when onboarding not yet complete) */}
+        {isComplete === false && (
+          <LoftyAISetupWidget onActivate={handleActivateWidgets} />
+        )}
 
         {/* Widget: Portfolio Stats */}
         {show('portfolio-stats') && (

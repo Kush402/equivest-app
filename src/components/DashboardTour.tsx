@@ -28,9 +28,10 @@ const TOOLTIP_HEIGHT_ESTIMATE = 240;
 
 interface DashboardTourProps {
   onDone: () => void;
+  initialWidgetId?: string;
 }
 
-export default function DashboardTour({ onDone }: DashboardTourProps) {
+export default function DashboardTour({ onDone, initialWidgetId }: DashboardTourProps) {
   const [stepIdx, setStepIdx]   = useState(0);
   const [steps, setSteps]       = useState<TourStep[]>([]);
   const [rect, setRect]         = useState<DOMRect | null>(null);
@@ -46,6 +47,11 @@ export default function DashboardTour({ onDone }: DashboardTourProps) {
       document.querySelector(`[data-widget-id="${s.widgetId}"]`) !== null
     );
     setSteps(active);
+    if (initialWidgetId) {
+      const idx = active.findIndex(s => s.widgetId === initialWidgetId);
+      if (idx >= 0) setStepIdx(idx);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const measureRect = useCallback((idx: number, stepList: TourStep[]) => {
