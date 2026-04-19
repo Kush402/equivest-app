@@ -1,4 +1,4 @@
-# Equivest — Lofty AI-Native PM Hackathon
+  # Lofty AI-Native PM Hackathon
 
 A reimagined first-experience for Lofty as an AI-native real estate platform. Built for the **"Real Estate AI-Native PM" track** — the goal was to rethink how users onboard, explore their dashboard, and interact with AI from day one.
 
