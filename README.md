@@ -1,8 +1,8 @@
-  # Lofty Features Addition & Dashboard Redesign
+# Lofty Features Addition & Dashboard Redesign
 
-A reimagined first-experience for Lofty as an AI-native real estate platform. Built for the **"Real Estate AI-Native PM" track** — the goal was to rethink how users onboard, explore their dashboard, and interact with AI from day one.
+Lofty is already a great AI-first Real Estate agent CRM. To make it even better, we analyzed the reviews and found the gaps — then filled them. We added features like AI voice-powered lead engagement, a smarter onboarding flow that personalizes your dashboard from day one, a live AI tour that explains every widget in context, and a personal AI assistant that actually knows your portfolio.
 
-Covers: AI-guided onboarding, a personalized dashboard that adapts to your investor profile, a voice AI lead-chat widget, a spotlight tour with live AI explanations, and a personal assistant page.
+Built for the **"Real Estate AI-Native PM" track** — the goal was to go beyond a redesign and ship real AI integrations that agents would actually use.
 
 ---
 
